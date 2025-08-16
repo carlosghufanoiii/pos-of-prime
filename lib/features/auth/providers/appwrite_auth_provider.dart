@@ -84,26 +84,6 @@ class AppwriteAuthController extends StateNotifier<AuthState> {
     }
   }
 
-  // Sign in with Google
-  Future<void> signInWithGoogle() async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      final user = await _authRepository.signInWithGoogle();
-      if (user != null && !user.isActive) {
-        state = state.copyWith(
-          isLoading: false, 
-          error: 'Your account has been deactivated. Please contact an administrator.',
-        );
-        await _authRepository.signOut();
-        return;
-      }
-      
-      state = state.copyWith(isLoading: false, user: user);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
 
   // Sign out
   Future<void> signOut() async {

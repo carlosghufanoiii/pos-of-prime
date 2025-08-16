@@ -42,8 +42,14 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
       appBar: AppBar(
         title: const Text('Cashier Dashboard'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [
             Tab(text: 'Pending Approval', icon: Icon(Icons.pending_actions)),
             Tab(text: 'Ready for Payment', icon: Icon(Icons.payment)),

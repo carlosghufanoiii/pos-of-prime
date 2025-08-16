@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/models/user_role.dart';
@@ -8,7 +7,6 @@ import '../../../shared/constants/app_constants.dart';
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Get current user stream
@@ -39,36 +37,6 @@ class AuthRepository {
     }
   }
 
-  // Sign in with Google
-  Future<AppUser?> signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential result = await _firebaseAuth.signInWithCredential(credential);
-      
-      if (result.user != null) {
-        // Check if user exists, if not create with default role
-        AppUser? existingUser = await getUserData(result.user!.uid);
-        existingUser ??= await _createUserProfile(
-          result.user!,
-          UserRole.waiter, // Default role - admin can change later
-        );
-        
-        await _updateLastLogin(result.user!.uid);
-        return existingUser;
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Google sign-in failed: $e');
-    }
-  }
 
   // Create user profile in Firestore
   Future<AppUser?> _createUserProfile(User user, UserRole role) async {
@@ -129,10 +97,7 @@ class AuthRepository {
   // Sign out
   Future<void> signOut() async {
     try {
-      await Future.wait([
-        _firebaseAuth.signOut(),
-        _googleSignIn.signOut(),
-      ]);
+      await _firebaseAuth.signOut();
     } catch (e) {
       throw Exception('Sign out failed: $e');
     }

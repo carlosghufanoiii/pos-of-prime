@@ -139,22 +139,6 @@ class AppwriteAuthRepository {
     }
   }
 
-  /// Sign in with Google (placeholder for future implementation)
-  Future<AppUser?> signInWithGoogle() async {
-    try {
-      // Initialize if not already done
-      if (_account == null) {
-        await initialize();
-      }
-
-      // For now, redirect to OAuth provider
-      // In production, implement proper OAuth flow
-      throw Exception('Google Sign-In not implemented yet. Please use email/password.');
-      
-    } catch (e) {
-      throw Exception('Google authentication failed: ${e.toString()}');
-    }
-  }
 
   /// Sign out
   Future<void> signOut() async {

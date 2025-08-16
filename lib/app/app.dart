@@ -11,11 +11,11 @@ class PrimePOSApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'Prime Bar POS',
+      title: 'PRIME Nightclub POS',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.dark, // Nightclub theme is always dark
       home: const AuthWrapper(),
     );
   }

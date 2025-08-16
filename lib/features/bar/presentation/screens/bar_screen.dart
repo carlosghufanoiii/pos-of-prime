@@ -37,9 +37,15 @@ class _BarScreenState extends ConsumerState<BarScreen>
       appBar: AppBar(
         title: const Text('Bar Display System'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [
             Tab(text: 'New Drinks', icon: Icon(Icons.local_bar)),
             Tab(text: 'In Preparation', icon: Icon(Icons.blender)),

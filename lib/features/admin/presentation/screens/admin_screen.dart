@@ -38,11 +38,13 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
         title: const Text('Admin Panel'),
         backgroundColor: AppTheme.adminColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
           indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [
             Tab(
               icon: Icon(Icons.dashboard),

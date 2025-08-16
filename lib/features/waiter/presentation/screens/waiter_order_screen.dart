@@ -8,6 +8,7 @@ import '../../../../shared/models/product.dart';
 import '../../../../shared/models/order.dart';
 import '../../../../shared/utils/currency_formatter.dart';
 import '../../../../shared/services/order_service.dart';
+import '../../../../shared/constants/app_theme.dart';
 import '../../../../features/auth/providers/appwrite_auth_provider.dart';
 import '../widgets/product_card.dart';
 import '../widgets/category_chip.dart';
@@ -52,8 +53,14 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
       appBar: AppBar(
         title: const Text('Create Order'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [
             Tab(text: 'Products'),
             Tab(text: 'Cart'),
@@ -81,44 +88,97 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
       ),
       bottomNavigationBar: itemCount > 0 
           ? Container(
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    blurRadius: 15,
+                    spreadRadius: 2,
                   ),
                 ],
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$itemCount item${itemCount != 1 ? 's' : ''}',
-                          style: Theme.of(context).textTheme.bodyMedium,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceGrey.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$itemCount item${itemCount != 1 ? 's' : ''}'.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              CurrencyFormatter.format(orderTotal),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          CurrencyFormatter.format(orderTotal),
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 20),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _showOrderConfirmation,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            'REVIEW ORDER',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              letterSpacing: 1.0,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _showOrderConfirmation,
-                    child: const Text('Review Order'),
-                  ),
-                ],
+                ),
               ),
             )
           : null,
@@ -269,133 +329,301 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
 
   Widget _buildOrderDetailsForm() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            blurRadius: 15,
+            spreadRadius: 2,
           ),
         ],
       ),
-      child: Column(
-        children: [
-          TextField(
-            controller: _tableController,
-            decoration: const InputDecoration(
-              labelText: 'Table Number',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.table_restaurant),
-            ),
-            onChanged: (value) {
-              ref.read(orderProvider.notifier).setTableNumber(value.isEmpty ? null : value);
-            },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceGrey.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _customerController,
-            decoration: const InputDecoration(
-              labelText: 'Customer Name (Optional)',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.person),
-            ),
-            onChanged: (value) {
-              ref.read(orderProvider.notifier).setCustomerName(value.isEmpty ? null : value);
-            },
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Modern Section Header
+              Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                      ),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'ORDER DETAILS',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Table Number Field
+              TextField(
+                controller: _tableController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Table Number',
+                  labelStyle: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.table_restaurant,
+                    color: AppTheme.primaryColor,
+                  ),
+                  filled: true,
+                  fillColor: AppTheme.deepBlack.withValues(alpha: 0.3),
+                ),
+                onChanged: (value) {
+                  ref.read(orderProvider.notifier).setTableNumber(value.isEmpty ? null : value);
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Customer Name Field
+              TextField(
+                controller: _customerController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Customer Name (Optional)',
+                  labelStyle: TextStyle(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.person,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                  ),
+                  filled: true,
+                  fillColor: AppTheme.deepBlack.withValues(alpha: 0.3),
+                ),
+                onChanged: (value) {
+                  ref.read(orderProvider.notifier).setCustomerName(value.isEmpty ? null : value);
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildCartItem(OrderItem item) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Product info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.product.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    CurrencyFormatter.format(item.unitPrice),
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (item.product.isAlcoholic)
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.orange[100],
-                        borderRadius: BorderRadius.circular(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceGrey.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Product info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.product.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 16,
                       ),
-                      child: const Text(
-                        'Alcoholic',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      CurrencyFormatter.format(item.unitPrice),
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (item.product.isAlcoholic)
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.warningColor.withValues(alpha: 0.2),
+                              AppTheme.warningColor.withValues(alpha: 0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.warningColor.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Text(
+                          'ALCOHOLIC',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.warningColor,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
+                  ],
+                ),
+              ),
+            
+              // Quantity controls and total
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Total price
+                  Text(
+                    CurrencyFormatter.format(item.totalPrice),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.white,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Quantity controls
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (item.quantity > 1) {
+                              ref.read(orderProvider.notifier).updateItemQuantity(
+                                item.id,
+                                item.quantity - 1,
+                              );
+                            } else {
+                              ref.read(orderProvider.notifier).removeItem(item.id);
+                            }
+                          },
+                          icon: Icon(
+                            Icons.remove_circle_outline,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          child: Text(
+                            '${item.quantity}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            ref.read(orderProvider.notifier).updateItemQuantity(
+                              item.id,
+                              item.quantity + 1,
+                            );
+                          },
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-            
-            // Quantity controls
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    if (item.quantity > 1) {
-                      ref.read(orderProvider.notifier).updateItemQuantity(
-                        item.id,
-                        item.quantity - 1,
-                      );
-                    } else {
-                      ref.read(orderProvider.notifier).removeItem(item.id);
-                    }
-                  },
-                  icon: const Icon(Icons.remove_circle_outline),
-                ),
-                Text(
-                  '${item.quantity}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  onPressed: () {
-                    ref.read(orderProvider.notifier).updateItemQuantity(
-                      item.id,
-                      item.quantity + 1,
-                    );
-                  },
-                  icon: const Icon(Icons.add_circle_outline),
-                ),
-              ],
-            ),
-            
-            // Total price
-            Text(
-              CurrencyFormatter.format(item.totalPrice),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -33,9 +33,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .signInWithEmailPassword(email, password);
   }
 
-  Future<void> _handleGoogleLogin() async {
-    await ref.read(appwriteAuthControllerProvider.notifier).signInWithGoogle();
-  }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -76,183 +73,291 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     });
 
-    // Navigation is now handled by AuthWrapper automatically
-
     final authState = ref.watch(appwriteAuthControllerProvider);
     
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryColor,
-              Color(0xFF0D47A1),
+              AppTheme.deepBlack,
+              AppTheme.darkGrey,
+              AppTheme.deepBlack,
             ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo and Title
+                  // Modern Logo with Glow Effect
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      gradient: LinearGradient(
+                        colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                        BoxShadow(
+                          color: AppTheme.neonPink.withValues(alpha: 0.3),
+                          blurRadius: 50,
+                          spreadRadius: 10,
                         ),
                       ],
                     ),
                     child: const Icon(
-                      Icons.point_of_sale,
-                      size: 60,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Prime Bar POS',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      Icons.diamond_outlined,
+                      size: 80,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'by Alatiris Inc.',
+                  const SizedBox(height: 32),
+                  
+                  // Brand Text with Modern Typography
+                  Text(
+                    'PRIME',
                     style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 8.0,
+                      shadows: [
+                        Shadow(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                          blurRadius: 20,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 48),
-                  
-                  // Login Form
-                  Card(
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                  const SizedBox(height: 8),
+                  Text(
+                    'NIGHTCLUB POS',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.white.withValues(alpha: 0.8),
+                      letterSpacing: 4.0,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Sign In',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 2,
+                    width: 120,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          AppTheme.primaryColor,
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 64),
+                  
+                  // Modern Login Card with Glass Effect
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceGrey.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        padding: const EdgeInsets.all(32),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              Text(
+                                'ACCESS PORTAL',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor,
+                                  letterSpacing: 2.0,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Email Field
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: _validateEmail,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Password Field
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              validator: _validatePassword,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
+                              const SizedBox(height: 32),
+                              
+                              // Modern Email Field
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
                                   ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                                child: TextFormField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: _validateEmail,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: InputDecoration(
+                                    labelText: 'Email Address',
+                                    prefixIcon: Icon(
+                                      Icons.email_outlined,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.all(20),
+                                    labelStyle: TextStyle(
+                                      color: AppTheme.primaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Login Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: authState.isLoading ? null : _handleEmailLogin,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryColor,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                              const SizedBox(height: 20),
+                              
+                              // Modern Password Field
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
                                 ),
-                                child: authState.isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Sign In',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                child: TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: _obscurePassword,
+                                  validator: _validatePassword,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: Icon(
+                                      Icons.lock_outlined,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                        color: AppTheme.primaryColor,
                                       ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Divider
-                            const Row(
-                              children: [
-                                Expanded(child: Divider()),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16),
-                                  child: Text('OR'),
-                                ),
-                                Expanded(child: Divider()),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Google Sign In
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: authState.isLoading ? null : _handleGoogleLogin,
-                                icon: const Icon(Icons.g_mobiledata, size: 24),
-                                label: const Text('Sign in with Google'),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  side: const BorderSide(color: AppTheme.primaryColor),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscurePassword = !_obscurePassword;
+                                        });
+                                      },
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.all(20),
+                                    labelStyle: TextStyle(
+                                      color: AppTheme.primaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 32),
+                              
+                              // Modern Login Button with Gradient
+                              Container(
+                                width: double.infinity,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: authState.isLoading ? null : _handleEmailLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: authState.isLoading
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 3,
+                                          ),
+                                        )
+                                      : Text(
+                                          'ENTER PRIME',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 2.0,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Footer
+                  Text(
+                    'Premium Entertainment Solutions',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ],

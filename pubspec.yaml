@@ -1,5 +1,5 @@
 name: prime_pos
-description: "Prime Bar POS - Production-grade Point-of-Sale app for bars & restaurants"
+description: "PRIME Nightclub POS - Premium Point-of-Sale system for nightclubs & entertainment venues"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -45,10 +45,6 @@ dependencies:
   cloud_firestore: ^5.4.3
   firebase_storage: ^12.3.2
   
-  # Google Services
-  google_sign_in: ^6.1.6
-  googleapis: ^11.4.0
-  googleapis_auth: ^1.4.1
   
   # Local Storage & Offline
   hive: ^2.2.3

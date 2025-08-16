@@ -2,9 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
-import 'package:googleapis/drive/v3.dart' as drive;
-import 'package:googleapis/sheets/v4.dart' as sheets;
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
@@ -12,16 +9,6 @@ import '../models/order.dart';
 import '../models/app_user.dart';
 
 class ExportService {
-  static const String _spreadsheetName = 'Prime POS Data Export';
-  
-  // Google API Credentials (In production, store these securely)
-  static const String _clientId = 'your-client-id.googleusercontent.com';
-  static const String _clientSecret = 'your-client-secret';
-  
-  static const List<String> _scopes = [
-    sheets.SheetsApi.spreadsheetsScope,
-    drive.DriveApi.driveFileScope,
-  ];
 
   /// Export orders to CSV file
   static Future<String> exportOrdersToCSV(List<Order> orders) async {
@@ -231,88 +218,6 @@ class ExportService {
     }
   }
 
-  /// Export to Google Sheets (requires authentication)
-  static Future<String> exportOrdersToGoogleSheets(
-    List<Order> orders,
-    AuthClient authClient,
-  ) async {
-    try {
-      final sheetsApi = sheets.SheetsApi(authClient);
-      final driveApi = drive.DriveApi(authClient);
-
-      // Create new spreadsheet
-      final spreadsheet = sheets.Spreadsheet(
-        properties: sheets.SpreadsheetProperties(
-          title: '$_spreadsheetName - ${DateTime.now().toIso8601String().split('T')[0]}',
-        ),
-      );
-
-      final createdSpreadsheet = await sheetsApi.spreadsheets.create(spreadsheet);
-      final spreadsheetId = createdSpreadsheet.spreadsheetId!;
-
-      // Prepare data
-      List<List<Object?>> sheetData = [
-        // Header row
-        [
-          'Order Number', 'Date', 'Time', 'Customer Name', 'Table Number',
-          'Waiter', 'Status', 'Items', 'Subtotal', 'Tax', 'Total',
-          'Payment Method', 'Preparation Area', 'Kitchen Started', 'Kitchen Ready', 'Served At'
-        ]
-      ];
-
-      // Data rows
-      for (final order in orders) {
-        final items = order.items.map((item) => 
-          '${item.quantity}x ${item.product.name} (₱${item.product.price})'
-        ).join('; ');
-
-        sheetData.add([
-          order.orderNumber,
-          order.createdAt.toIso8601String().split('T')[0],
-          order.createdAt.toIso8601String().split('T')[1].split('.')[0],
-          order.customerName ?? '',
-          order.tableNumber?.toString() ?? '',
-          order.waiterName,
-          order.status.name,
-          items,
-          order.subtotal,
-          order.taxAmount,
-          order.total,
-          order.paymentMethod?.name ?? '',
-          order.items.first.product.preparationArea.name,
-          order.prepStartedAt?.toIso8601String() ?? '',
-          order.readyAt?.toIso8601String() ?? '',
-          order.servedAt?.toIso8601String() ?? '',
-        ]);
-      }
-
-      // Update sheet with data
-      final valueRange = sheets.ValueRange(
-        values: sheetData,
-      );
-
-      await sheetsApi.spreadsheets.values.update(
-        valueRange,
-        spreadsheetId,
-        'Sheet1!A1:P${sheetData.length}',
-        valueInputOption: 'USER_ENTERED',
-      );
-
-      // Make the spreadsheet shareable
-      await driveApi.permissions.create(
-        drive.Permission(
-          role: 'reader',
-          type: 'anyone',
-        ),
-        spreadsheetId,
-      );
-
-      // Return the shareable URL
-      return 'https://docs.google.com/spreadsheets/d/$spreadsheetId/edit';
-    } catch (e) {
-      throw Exception('Failed to export to Google Sheets: $e');
-    }
-  }
 
   /// Generate sales report data
   static Map<String, dynamic> generateSalesReport(List<Order> orders) {
