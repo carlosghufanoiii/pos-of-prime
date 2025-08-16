@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/constants/app_theme.dart';
+import '../../providers/admin_provider.dart';
+import '../widgets/admin_dashboard_tab.dart';
+import '../widgets/user_management_tab.dart';
+import '../widgets/analytics_tab.dart';
+import '../widgets/system_stats_tab.dart';
+import '../widgets/export_sync_tab.dart';
+
+class AdminScreen extends ConsumerStatefulWidget {
+  const AdminScreen({super.key});
+
+  @override
+  ConsumerState<AdminScreen> createState() => _AdminScreenState();
+}
+
+class _AdminScreenState extends ConsumerState<AdminScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Admin Panel'),
+        backgroundColor: AppTheme.adminColor,
+        foregroundColor: Colors.white,
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          tabs: const [
+            Tab(
+              icon: Icon(Icons.dashboard),
+              text: 'Dashboard',
+            ),
+            Tab(
+              icon: Icon(Icons.people),
+              text: 'Users',
+            ),
+            Tab(
+              icon: Icon(Icons.analytics),
+              text: 'Analytics',
+            ),
+            Tab(
+              icon: Icon(Icons.monitor_heart),
+              text: 'System',
+            ),
+            Tab(
+              icon: Icon(Icons.cloud_sync),
+              text: 'Export & Sync',
+            ),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          AdminDashboardTab(),
+          UserManagementTab(),
+          AnalyticsTab(),
+          SystemStatsTab(),
+          ExportSyncTab(),
+        ],
+      ),
+    );
+  }
+}

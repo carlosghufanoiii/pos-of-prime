@@ -1,0 +1,417 @@
+import '../models/product.dart';
+import '../services/database_service.dart';
+
+class ProductRepository {
+  final DatabaseService _db = DatabaseService.instance;
+  
+  /// Get all products
+  Future<List<Product>> getAllProducts() async {
+    try {
+      final result = await _db.query('''
+        SELECT p.id, p.name, p.sku, p.price, p.category, p.is_alcoholic, p.is_active,
+               p.description, p.image_url, p.stock_quantity, p.unit, p.cost, 
+               p.preparation_area, p.created_at, p.updated_at
+        FROM products p
+        WHERE p.is_active = true
+        ORDER BY p.category, p.name
+      ''');
+      
+      if (result == null) return [];
+      
+      final products = <Product>[];
+      for (final row in result) {
+        final modifiers = await _getProductModifiers(row['id']);
+        products.add(_mapRowToProduct(row, modifiers));
+      }
+      
+      return products;
+    } catch (e) {
+      print('❌ Error getting all products: $e');
+      return [];
+    }
+  }
+  
+  /// Get product by ID
+  Future<Product?> getProductById(String id) async {
+    try {
+      final result = await _db.query('''
+        SELECT p.id, p.name, p.sku, p.price, p.category, p.is_alcoholic, p.is_active,
+               p.description, p.image_url, p.stock_quantity, p.unit, p.cost, 
+               p.preparation_area, p.created_at, p.updated_at
+        FROM products p
+        WHERE p.id = ?
+      ''', [id]);
+      
+      if (result == null || result.isEmpty) return null;
+      
+      final row = result.first;
+      final modifiers = await _getProductModifiers(id);
+      
+      return _mapRowToProduct(row, modifiers);
+    } catch (e) {
+      print('❌ Error getting product by ID: $e');
+      return null;
+    }
+  }
+  
+  /// Get products by category
+  Future<List<Product>> getProductsByCategory(String category) async {
+    try {
+      final result = await _db.query('''
+        SELECT p.id, p.name, p.sku, p.price, p.category, p.is_alcoholic, p.is_active,
+               p.description, p.image_url, p.stock_quantity, p.unit, p.cost, 
+               p.preparation_area, p.created_at, p.updated_at
+        FROM products p
+        WHERE p.category = ? AND p.is_active = true
+        ORDER BY p.name
+      ''', [category]);
+      
+      if (result == null) return [];
+      
+      final products = <Product>[];
+      for (final row in result) {
+        final modifiers = await _getProductModifiers(row['id']);
+        products.add(_mapRowToProduct(row, modifiers));
+      }
+      
+      return products;
+    } catch (e) {
+      print('❌ Error getting products by category: $e');
+      return [];
+    }
+  }
+  
+  /// Get products by preparation area
+  Future<List<Product>> getProductsByPreparationArea(PreparationArea area) async {
+    try {
+      final result = await _db.query('''
+        SELECT p.id, p.name, p.sku, p.price, p.category, p.is_alcoholic, p.is_active,
+               p.description, p.image_url, p.stock_quantity, p.unit, p.cost, 
+               p.preparation_area, p.created_at, p.updated_at
+        FROM products p
+        WHERE p.preparation_area = ? AND p.is_active = true
+        ORDER BY p.category, p.name
+      ''', [area.name]);
+      
+      if (result == null) return [];
+      
+      final products = <Product>[];
+      for (final row in result) {
+        final modifiers = await _getProductModifiers(row['id']);
+        products.add(_mapRowToProduct(row, modifiers));
+      }
+      
+      return products;
+    } catch (e) {
+      print('❌ Error getting products by preparation area: $e');
+      return [];
+    }
+  }
+  
+  /// Search products
+  Future<List<Product>> searchProducts(String query) async {
+    try {
+      final searchQuery = '%$query%';
+      final result = await _db.query('''
+        SELECT p.id, p.name, p.sku, p.price, p.category, p.is_alcoholic, p.is_active,
+               p.description, p.image_url, p.stock_quantity, p.unit, p.cost, 
+               p.preparation_area, p.created_at, p.updated_at
+        FROM products p
+        WHERE (p.name LIKE ? OR p.description LIKE ? OR p.category LIKE ? OR p.sku LIKE ?)
+          AND p.is_active = true
+        ORDER BY p.name
+      ''', [searchQuery, searchQuery, searchQuery, searchQuery]);
+      
+      if (result == null) return [];
+      
+      final products = <Product>[];
+      for (final row in result) {
+        final modifiers = await _getProductModifiers(row['id']);
+        products.add(_mapRowToProduct(row, modifiers));
+      }
+      
+      return products;
+    } catch (e) {
+      print('❌ Error searching products: $e');
+      return [];
+    }
+  }
+  
+  /// Get all categories
+  Future<List<String>> getCategories() async {
+    try {
+      final result = await _db.query('''
+        SELECT DISTINCT category 
+        FROM products 
+        WHERE is_active = true 
+        ORDER BY category
+      ''');
+      
+      if (result == null) return [];
+      
+      return result.map((row) => row['category'].toString()).toList();
+    } catch (e) {
+      print('❌ Error getting categories: $e');
+      return [];
+    }
+  }
+  
+  /// Create new product
+  Future<Product?> createProduct(Product product) async {
+    try {
+      await _db.query('START TRANSACTION');
+      
+      // Insert product
+      final productSql = '''
+        INSERT INTO products (id, name, sku, price, category, is_alcoholic, is_active,
+                            description, image_url, stock_quantity, unit, cost, 
+                            preparation_area, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      
+      final result = await _db.insert(productSql, [
+        product.id,
+        product.name,
+        product.sku,
+        product.price,
+        product.category,
+        product.isAlcoholic,
+        product.isActive,
+        product.description,
+        product.imageUrl,
+        product.stockQuantity,
+        product.unit,
+        product.cost,
+        product.preparationArea.name,
+        now,
+        now,
+      ]);
+      
+      if (result == null) {
+        await _db.query('ROLLBACK');
+        return null;
+      }
+      
+      // Insert modifiers
+      for (final modifier in product.modifiers) {
+        final modifierSql = '''
+          INSERT INTO product_modifiers (id, product_id, name, price, is_required, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        ''';
+        
+        await _db.insert(modifierSql, [
+          modifier.id,
+          product.id,
+          modifier.name,
+          modifier.price,
+          modifier.isRequired,
+          now,
+        ]);
+      }
+      
+      await _db.query('COMMIT');
+      
+      return product.copyWith(
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    } catch (e) {
+      print('❌ Error creating product: $e');
+      await _db.query('ROLLBACK');
+      return null;
+    }
+  }
+  
+  /// Update product
+  Future<Product?> updateProduct(Product product) async {
+    try {
+      await _db.query('START TRANSACTION');
+      
+      // Update product
+      final productSql = '''
+        UPDATE products 
+        SET name = ?, sku = ?, price = ?, category = ?, is_alcoholic = ?, is_active = ?,
+            description = ?, image_url = ?, stock_quantity = ?, unit = ?, cost = ?, 
+            preparation_area = ?, updated_at = ?
+        WHERE id = ?
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      
+      final result = await _db.execute(productSql, [
+        product.name,
+        product.sku,
+        product.price,
+        product.category,
+        product.isAlcoholic,
+        product.isActive,
+        product.description,
+        product.imageUrl,
+        product.stockQuantity,
+        product.unit,
+        product.cost,
+        product.preparationArea.name,
+        now,
+        product.id,
+      ]);
+      
+      if (result == null || result == 0) {
+        await _db.query('ROLLBACK');
+        return null;
+      }
+      
+      // Delete existing modifiers
+      await _db.execute('DELETE FROM product_modifiers WHERE product_id = ?', [product.id]);
+      
+      // Insert new modifiers
+      for (final modifier in product.modifiers) {
+        final modifierSql = '''
+          INSERT INTO product_modifiers (id, product_id, name, price, is_required, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        ''';
+        
+        await _db.insert(modifierSql, [
+          modifier.id,
+          product.id,
+          modifier.name,
+          modifier.price,
+          modifier.isRequired,
+          now,
+        ]);
+      }
+      
+      await _db.query('COMMIT');
+      
+      return product.copyWith(updatedAt: DateTime.now());
+    } catch (e) {
+      print('❌ Error updating product: $e');
+      await _db.query('ROLLBACK');
+      return null;
+    }
+  }
+  
+  /// Delete product (soft delete)
+  Future<bool> deleteProduct(String id) async {
+    try {
+      final sql = '''
+        UPDATE products 
+        SET is_active = false, updated_at = ?
+        WHERE id = ?
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      final result = await _db.execute(sql, [now, id]);
+      
+      return result != null && result > 0;
+    } catch (e) {
+      print('❌ Error deleting product: $e');
+      return false;
+    }
+  }
+  
+  /// Update stock quantity
+  Future<bool> updateStock(String productId, int newQuantity) async {
+    try {
+      final sql = '''
+        UPDATE products 
+        SET stock_quantity = ?, updated_at = ?
+        WHERE id = ?
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      final result = await _db.execute(sql, [newQuantity, now, productId]);
+      
+      return result != null && result > 0;
+    } catch (e) {
+      print('❌ Error updating stock: $e');
+      return false;
+    }
+  }
+  
+  /// Get low stock products
+  Future<List<Product>> getLowStockProducts(int threshold) async {
+    try {
+      final result = await _db.query('''
+        SELECT p.id, p.name, p.sku, p.price, p.category, p.is_alcoholic, p.is_active,
+               p.description, p.image_url, p.stock_quantity, p.unit, p.cost, 
+               p.preparation_area, p.created_at, p.updated_at
+        FROM products p
+        WHERE p.stock_quantity <= ? AND p.is_active = true
+        ORDER BY p.stock_quantity ASC, p.name
+      ''', [threshold]);
+      
+      if (result == null) return [];
+      
+      final products = <Product>[];
+      for (final row in result) {
+        final modifiers = await _getProductModifiers(row['id']);
+        products.add(_mapRowToProduct(row, modifiers));
+      }
+      
+      return products;
+    } catch (e) {
+      print('❌ Error getting low stock products: $e');
+      return [];
+    }
+  }
+  
+  /// Get product modifiers
+  Future<List<ProductModifier>> _getProductModifiers(String productId) async {
+    try {
+      final result = await _db.query('''
+        SELECT id, name, price, is_required
+        FROM product_modifiers
+        WHERE product_id = ?
+        ORDER BY name
+      ''', [productId]);
+      
+      if (result == null) return [];
+      
+      return result.map((row) => ProductModifier(
+        id: DatabaseService.getString(row, 'id') ?? '',
+        name: DatabaseService.getString(row, 'name') ?? '',
+        price: DatabaseService.getDouble(row, 'price') ?? 0.0,
+        isRequired: DatabaseService.getBool(row, 'is_required') ?? false,
+      )).toList();
+    } catch (e) {
+      print('❌ Error getting product modifiers: $e');
+      return [];
+    }
+  }
+  
+  /// Helper method to map database row to Product
+  Product _mapRowToProduct(Map<String, dynamic> row, List<ProductModifier> modifiers) {
+    return Product(
+      id: DatabaseService.getString(row, 'id') ?? '',
+      name: DatabaseService.getString(row, 'name') ?? '',
+      sku: DatabaseService.getString(row, 'sku') ?? '',
+      price: DatabaseService.getDouble(row, 'price') ?? 0.0,
+      category: DatabaseService.getString(row, 'category') ?? '',
+      isAlcoholic: DatabaseService.getBool(row, 'is_alcoholic') ?? false,
+      isActive: DatabaseService.getBool(row, 'is_active') ?? true,
+      description: DatabaseService.getString(row, 'description'),
+      imageUrl: DatabaseService.getString(row, 'image_url'),
+      stockQuantity: DatabaseService.getInt(row, 'stock_quantity') ?? 0,
+      unit: DatabaseService.getString(row, 'unit') ?? 'pcs',
+      cost: DatabaseService.getDouble(row, 'cost'),
+      modifiers: modifiers,
+      preparationArea: _parsePreparationArea(DatabaseService.getString(row, 'preparation_area') ?? ''),
+      createdAt: DatabaseService.parseDateTime(row['created_at']) ?? DateTime.now(),
+      updatedAt: DatabaseService.parseDateTime(row['updated_at']) ?? DateTime.now(),
+    );
+  }
+  
+  /// Helper method to parse preparation area from string
+  PreparationArea _parsePreparationArea(String areaString) {
+    try {
+      return PreparationArea.values.firstWhere(
+        (area) => area.name == areaString,
+        orElse: () => PreparationArea.kitchen,
+      );
+    } catch (e) {
+      return PreparationArea.kitchen;
+    }
+  }
+}

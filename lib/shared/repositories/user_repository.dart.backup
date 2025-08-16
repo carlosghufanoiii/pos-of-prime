@@ -1,0 +1,296 @@
+import '../models/app_user.dart';
+import '../models/user_role.dart';
+import '../services/database_service.dart';
+
+class UserRepository {
+  final DatabaseService _db = DatabaseService.instance;
+  
+  /// Get all users
+  Future<List<AppUser>> getAllUsers() async {
+    try {
+      final result = await _db.query('''
+        SELECT id, employee_id, name, email, role, is_active, phone, address, 
+               avatar_url, created_at, updated_at, last_login
+        FROM users 
+        ORDER BY name
+      ''');
+      
+      if (result == null) return [];
+      
+      return result.map((row) => _mapRowToUser(row)).toList();
+    } catch (e) {
+      print('❌ Error getting all users: $e');
+      return [];
+    }
+  }
+  
+  /// Get user by ID
+  Future<AppUser?> getUserById(String id) async {
+    try {
+      final result = await _db.query('''
+        SELECT id, employee_id, name, email, role, is_active, phone, address, 
+               avatar_url, created_at, updated_at, last_login
+        FROM users 
+        WHERE id = ?
+      ''', [id]);
+      
+      if (result == null || result.isEmpty) return null;
+      
+      return _mapRowToUser(result.first);
+    } catch (e) {
+      print('❌ Error getting user by ID: $e');
+      return null;
+    }
+  }
+  
+  /// Get user by email
+  Future<AppUser?> getUserByEmail(String email) async {
+    try {
+      final result = await _db.query('''
+        SELECT id, employee_id, name, email, role, is_active, phone, address, 
+               avatar_url, created_at, updated_at, last_login
+        FROM users 
+        WHERE email = ?
+      ''', [email]);
+      
+      if (result == null || result.isEmpty) return null;
+      
+      return _mapRowToUser(result.first);
+    } catch (e) {
+      print('❌ Error getting user by email: $e');
+      return null;
+    }
+  }
+  
+  /// Get user by employee ID
+  Future<AppUser?> getUserByEmployeeId(String employeeId) async {
+    try {
+      final result = await _db.query('''
+        SELECT id, employee_id, name, email, role, is_active, phone, address, 
+               avatar_url, created_at, updated_at, last_login
+        FROM users 
+        WHERE employee_id = ?
+      ''', [employeeId]);
+      
+      if (result == null || result.isEmpty) return null;
+      
+      return _mapRowToUser(result.first);
+    } catch (e) {
+      print('❌ Error getting user by employee ID: $e');
+      return null;
+    }
+  }
+  
+  /// Get users by role
+  Future<List<AppUser>> getUsersByRole(UserRole role) async {
+    try {
+      final result = await _db.query('''
+        SELECT id, employee_id, name, email, role, is_active, phone, address, 
+               avatar_url, created_at, updated_at, last_login
+        FROM users 
+        WHERE role = ? AND is_active = true
+        ORDER BY name
+      ''', [role.name]);
+      
+      if (result == null) return [];
+      
+      return result.map((row) => _mapRowToUser(row)).toList();
+    } catch (e) {
+      print('❌ Error getting users by role: $e');
+      return [];
+    }
+  }
+  
+  /// Create new user
+  Future<AppUser?> createUser(AppUser user) async {
+    try {
+      final sql = '''
+        INSERT INTO users (id, employee_id, name, email, role, is_active, phone, address, avatar_url, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      
+      final result = await _db.insert(sql, [
+        user.id,
+        user.employeeId,
+        user.displayName,
+        user.email,
+        user.role.name,
+        user.isActive,
+        user.phoneNumber,
+        user.address,
+        user.photoUrl,
+        now,
+        now,
+      ]);
+      
+      if (result != null) {
+        return user.copyWith(
+          createdAt: DateTime.now(),
+        );
+      }
+      
+      return null;
+    } catch (e) {
+      print('❌ Error creating user: $e');
+      return null;
+    }
+  }
+  
+  /// Update user
+  Future<AppUser?> updateUser(AppUser user) async {
+    try {
+      final sql = '''
+        UPDATE users 
+        SET employee_id = ?, name = ?, email = ?, role = ?, is_active = ?, 
+            phone = ?, address = ?, avatar_url = ?, updated_at = ?
+        WHERE id = ?
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      
+      final result = await _db.execute(sql, [
+        user.employeeId,
+        user.displayName,
+        user.email,
+        user.role.name,
+        user.isActive,
+        user.phoneNumber,
+        user.address,
+        user.photoUrl,
+        now,
+        user.id,
+      ]);
+      
+      if (result != null && result > 0) {
+        return user;
+      }
+      
+      return null;
+    } catch (e) {
+      print('❌ Error updating user: $e');
+      return null;
+    }
+  }
+  
+  /// Delete user (soft delete - mark as inactive)
+  Future<bool> deleteUser(String id) async {
+    try {
+      final sql = '''
+        UPDATE users 
+        SET is_active = false, updated_at = ?
+        WHERE id = ?
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      final result = await _db.execute(sql, [now, id]);
+      
+      return result != null && result > 0;
+    } catch (e) {
+      print('❌ Error deleting user: $e');
+      return false;
+    }
+  }
+  
+  /// Update last login
+  Future<bool> updateLastLogin(String id) async {
+    try {
+      final sql = '''
+        UPDATE users 
+        SET last_login = ?, updated_at = ?
+        WHERE id = ?
+      ''';
+      
+      final now = DatabaseService.formatDateTime(DateTime.now());
+      final result = await _db.execute(sql, [now, now, id]);
+      
+      return result != null && result > 0;
+    } catch (e) {
+      print('❌ Error updating last login: $e');
+      return false;
+    }
+  }
+  
+  /// Get active users count
+  Future<int> getActiveUsersCount() async {
+    try {
+      final result = await _db.query('''
+        SELECT COUNT(*) as count 
+        FROM users 
+        WHERE is_active = true
+      ''');
+      
+      if (result == null || result.isEmpty) return 0;
+      
+      return DatabaseService.getInt(result.first, 'count') ?? 0;
+    } catch (e) {
+      print('❌ Error getting active users count: $e');
+      return 0;
+    }
+  }
+  
+  /// Search users by name or email
+  Future<List<AppUser>> searchUsers(String query) async {
+    try {
+      final searchQuery = '%$query%';
+      final result = await _db.query('''
+        SELECT id, employee_id, name, email, role, is_active, phone, address, 
+               avatar_url, created_at, updated_at, last_login
+        FROM users 
+        WHERE (name LIKE ? OR email LIKE ? OR employee_id LIKE ?) 
+          AND is_active = true
+        ORDER BY name
+      ''', [searchQuery, searchQuery, searchQuery]);
+      
+      if (result == null) return [];
+      
+      return result.map((row) => _mapRowToUser(row)).toList();
+    } catch (e) {
+      print('❌ Error searching users: $e');
+      return [];
+    }
+  }
+  
+  /// Helper method to map database row to AppUser
+  AppUser _mapRowToUser(dynamic row) {
+    // Convert ResultRow to Map<String, dynamic>
+    final Map<String, dynamic> rowMap = {};
+    if (row is Map) {
+      rowMap.addAll(Map<String, dynamic>.from(row));
+    } else {
+      // Handle mysql1 ResultRow
+      final fields = row.fields;
+      final values = row.values;
+      for (int i = 0; i < fields.length && i < values.length; i++) {
+        rowMap[fields[i].name] = values[i];
+      }
+    }
+    
+    return AppUser(
+      id: DatabaseService.getString(rowMap, 'id') ?? '',
+      employeeId: DatabaseService.getString(rowMap, 'employee_id'),
+      displayName: DatabaseService.getString(rowMap, 'name') ?? '',
+      email: DatabaseService.getString(rowMap, 'email') ?? '',
+      role: _parseUserRole(DatabaseService.getString(rowMap, 'role') ?? ''),
+      isActive: DatabaseService.getBool(rowMap, 'is_active') ?? true,
+      phoneNumber: DatabaseService.getString(rowMap, 'phone'),
+      address: DatabaseService.getString(rowMap, 'address'),
+      photoUrl: DatabaseService.getString(rowMap, 'avatar_url'),
+      createdAt: DatabaseService.parseDateTime(rowMap['created_at']) ?? DateTime.now(),
+      lastLoginAt: DatabaseService.parseDateTime(rowMap['last_login']),
+    );
+  }
+  
+  /// Helper method to parse user role from string
+  UserRole _parseUserRole(String roleString) {
+    try {
+      return UserRole.values.firstWhere(
+        (role) => role.name == roleString,
+        orElse: () => UserRole.waiter,
+      );
+    } catch (e) {
+      return UserRole.waiter;
+    }
+  }
+}

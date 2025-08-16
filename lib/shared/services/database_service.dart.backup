@@ -1,0 +1,264 @@
+import 'dart:async';
+import 'package:mysql1/mysql1.dart';
+
+class DatabaseService {
+  static DatabaseService? _instance;
+  static DatabaseService get instance => _instance ??= DatabaseService._internal();
+  
+  DatabaseService._internal();
+  
+  MySqlConnection? _connection;
+  bool _isConnected = false;
+  
+  // Database configuration
+  static const String _host = '127.0.0.1';
+  static const int _port = 3306;
+  static const String _user = 'root';
+  static const String _password = 'prime_pos_root_2024';
+  static const String _db = 'primepos_db';
+  
+  /// Initialize database connection
+  Future<bool> initialize() async {
+    try {
+      if (_isConnected && _connection != null) {
+        return true;
+      }
+      
+      final settings = ConnectionSettings(
+        host: _host,
+        port: _port,
+        user: _user,
+        password: _password,
+        db: _db,
+        timeout: const Duration(seconds: 30),
+      );
+      
+      _connection = await MySqlConnection.connect(settings);
+      _isConnected = true;
+      
+      print('✅ Database connected successfully');
+      return true;
+    } catch (e) {
+      print('❌ Database connection failed: $e');
+      _isConnected = false;
+      return false;
+    }
+  }
+  
+  /// Get database connection
+  MySqlConnection? get connection {
+    if (!_isConnected || _connection == null) {
+      print('⚠️  Database not connected. Call initialize() first.');
+      return null;
+    }
+    return _connection;
+  }
+  
+  /// Check if database is connected
+  bool get isConnected => _isConnected && _connection != null;
+  
+  /// Execute a query and return results
+  Future<Results?> query(String sql, [List<Object?>? values]) async {
+    try {
+      if (!isConnected) {
+        final connected = await initialize();
+        if (!connected) return null;
+      }
+      
+      return await _connection!.query(sql, values);
+    } catch (e) {
+      print('❌ Database query error: $e');
+      print('📄 SQL: $sql');
+      if (values != null) print('📊 Values: $values');
+      return null;
+    }
+  }
+  
+  /// Execute a prepared query
+  Future<Results?> prepared(String sql, List<Object?> values) async {
+    try {
+      if (!isConnected) {
+        final connected = await initialize();
+        if (!connected) return null;
+      }
+      
+      return await _connection!.query(sql, values);
+    } catch (e) {
+      print('❌ Database prepared query error: $e');
+      print('📄 SQL: $sql');
+      print('📊 Values: $values');
+      return null;
+    }
+  }
+  
+  /// Execute an insert and return the inserted ID
+  Future<int?> insert(String sql, [List<Object?>? values]) async {
+    try {
+      if (!isConnected) {
+        final connected = await initialize();
+        if (!connected) return null;
+      }
+      
+      final result = await _connection!.query(sql, values);
+      return result.insertId;
+    } catch (e) {
+      print('❌ Database insert error: $e');
+      print('📄 SQL: $sql');
+      if (values != null) print('📊 Values: $values');
+      return null;
+    }
+  }
+  
+  /// Execute an update/delete and return affected rows
+  Future<int?> execute(String sql, [List<Object?>? values]) async {
+    try {
+      if (!isConnected) {
+        final connected = await initialize();
+        if (!connected) return null;
+      }
+      
+      final result = await _connection!.query(sql, values);
+      return result.affectedRows;
+    } catch (e) {
+      print('❌ Database execute error: $e');
+      print('📄 SQL: $sql');
+      if (values != null) print('📊 Values: $values');
+      return null;
+    }
+  }
+  
+  /// Execute multiple queries in a transaction
+  Future<bool> transaction(List<String> queries, [List<List<Object?>>? valuesList]) async {
+    try {
+      if (!isConnected) {
+        final connected = await initialize();
+        if (!connected) return false;
+      }
+      
+      await _connection!.query('START TRANSACTION');
+      
+      for (int i = 0; i < queries.length; i++) {
+        final sql = queries[i];
+        final values = valuesList != null && i < valuesList.length ? valuesList[i] : null;
+        await _connection!.query(sql, values);
+      }
+      
+      await _connection!.query('COMMIT');
+      return true;
+    } catch (e) {
+      print('❌ Database transaction error: $e');
+      try {
+        await _connection!.query('ROLLBACK');
+      } catch (rollbackError) {
+        print('❌ Rollback error: $rollbackError');
+      }
+      return false;
+    }
+  }
+  
+  /// Get table count for health check
+  Future<Map<String, int>> getTableCounts() async {
+    try {
+      if (!isConnected) {
+        final connected = await initialize();
+        if (!connected) return {};
+      }
+      
+      final counts = <String, int>{};
+      
+      final tables = ['users', 'products', 'orders', 'order_items', 'product_modifiers'];
+      
+      for (final table in tables) {
+        final result = await query('SELECT COUNT(*) as count FROM $table');
+        if (result != null && result.isNotEmpty) {
+          counts[table] = result.first['count'] as int;
+        }
+      }
+      
+      return counts;
+    } catch (e) {
+      print('❌ Error getting table counts: $e');
+      return {};
+    }
+  }
+  
+  /// Test database connection
+  Future<bool> testConnection() async {
+    try {
+      final result = await query('SELECT 1 as test');
+      return result != null && result.isNotEmpty;
+    } catch (e) {
+      print('❌ Database connection test failed: $e');
+      return false;
+    }
+  }
+  
+  /// Close database connection
+  Future<void> close() async {
+    try {
+      if (_connection != null) {
+        await _connection!.close();
+        _connection = null;
+        _isConnected = false;
+        print('✅ Database connection closed');
+      }
+    } catch (e) {
+      print('❌ Error closing database connection: $e');
+    }
+  }
+  
+  /// Helper method to convert MySQL DateTime to Dart DateTime
+  static DateTime? parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        print('⚠️  Error parsing datetime: $value');
+        return null;
+      }
+    }
+    return null;
+  }
+  
+  /// Helper method to convert Dart DateTime to MySQL format
+  static String formatDateTime(DateTime dateTime) {
+    return dateTime.toIso8601String().substring(0, 19).replaceAll('T', ' ');
+  }
+  
+  /// Helper method to safely get string from result
+  static String? getString(Map<String, dynamic> row, String key) {
+    final value = row[key];
+    return value?.toString();
+  }
+  
+  /// Helper method to safely get int from result
+  static int? getInt(Map<String, dynamic> row, String key) {
+    final value = row[key];
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+  
+  /// Helper method to safely get double from result
+  static double? getDouble(Map<String, dynamic> row, String key) {
+    final value = row[key];
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+  
+  /// Helper method to safely get bool from result
+  static bool? getBool(Map<String, dynamic> row, String key) {
+    final value = row[key];
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) return value.toLowerCase() == 'true' || value == '1';
+    return null;
+  }
+}

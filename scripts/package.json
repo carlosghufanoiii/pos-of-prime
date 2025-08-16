@@ -1,0 +1,18 @@
+{
+  "name": "primepos-scripts",
+  "version": "1.0.0",
+  "description": "Setup scripts for Prime POS Appwrite integration",
+  "main": "migrate.js",
+  "scripts": {
+    "migrate": "node migrate.js",
+    "seed": "node seed-data.js",
+    "setup": "./setup-appwrite.sh"
+  },
+  "dependencies": {
+    "node-appwrite": "^11.0.0"
+  },
+  "devDependencies": {},
+  "keywords": ["appwrite", "pos", "setup", "migration"],
+  "author": "Prime POS Team",
+  "license": "MIT"
+}
