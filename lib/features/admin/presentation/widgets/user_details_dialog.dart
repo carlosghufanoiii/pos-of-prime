@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/constants/app_theme.dart';
 import '../../../../shared/models/app_user.dart';
 import '../../../../shared/models/user_role.dart';
+import '../../providers/admin_provider.dart';
 import 'edit_user_dialog.dart';
 
-class UserDetailsDialog extends StatelessWidget {
+class UserDetailsDialog extends ConsumerStatefulWidget {
   final AppUser user;
 
-  const UserDetailsDialog({
-    super.key,
-    required this.user,
-  });
+  const UserDetailsDialog({super.key, required this.user});
+
+  @override
+  ConsumerState<UserDetailsDialog> createState() => _UserDetailsDialogState();
+}
+
+class _UserDetailsDialogState extends ConsumerState<UserDetailsDialog> {
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +33,9 @@ class UserDetailsDialog extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: _getRoleColor(user.role),
+                  backgroundColor: _getRoleColor(widget.user.role),
                   child: Text(
-                    user.displayName.substring(0, 1).toUpperCase(),
+                    widget.user.name.substring(0, 1).toUpperCase(),
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -43,23 +49,26 @@ class UserDetailsDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user.displayName,
+                        widget.user.name,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getRoleColor(user.role).withOpacity(0.2),
+                          color: _getRoleColor(widget.user.role).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          user.role.displayName,
+                          widget.user.role.displayName,
                           style: TextStyle(
                             fontSize: 14,
-                            color: _getRoleColor(user.role),
+                            color: _getRoleColor(widget.user.role),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -80,10 +89,12 @@ class UserDetailsDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: user.isActive ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                color: widget.user.isActive
+                    ? Colors.green.withValues(alpha: 0.2)
+                    : Colors.red.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: user.isActive ? Colors.green : Colors.red,
+                  color: widget.user.isActive ? Colors.green : Colors.red,
                   width: 1,
                 ),
               ),
@@ -91,15 +102,15 @@ class UserDetailsDialog extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    user.isActive ? Icons.check_circle : Icons.block,
+                    widget.user.isActive ? Icons.check_circle : Icons.block,
                     size: 16,
-                    color: user.isActive ? Colors.green : Colors.red,
+                    color: widget.user.isActive ? Colors.green : Colors.red,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    user.isActive ? 'Active' : 'Inactive',
+                    widget.user.isActive ? 'Active' : 'Inactive',
                     style: TextStyle(
-                      color: user.isActive ? Colors.green : Colors.red,
+                      color: widget.user.isActive ? Colors.green : Colors.red,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -113,42 +124,36 @@ class UserDetailsDialog extends StatelessWidget {
             // User Information
             const Text(
               'User Information',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
-            _buildInfoRow('Email', user.email, Icons.email),
-            if (user.employeeId != null)
-              _buildInfoRow('Employee ID', user.employeeId!, Icons.badge),
-            if (user.phoneNumber != null)
-              _buildInfoRow('Phone', user.phoneNumber!, Icons.phone),
-            if (user.address != null)
-              _buildInfoRow('Address', user.address!, Icons.location_on),
+            _buildInfoRow('Email', widget.user.email, Icons.email),
+            if (widget.user.employeeId != null)
+              _buildInfoRow('Employee ID', widget.user.employeeId!, Icons.badge),
+            if (widget.user.phoneNumber != null)
+              _buildInfoRow('Phone', widget.user.phoneNumber!, Icons.phone),
+            if (widget.user.address != null)
+              _buildInfoRow('Address', widget.user.address!, Icons.location_on),
 
             const SizedBox(height: 20),
 
             // Account Information
             const Text(
               'Account Information',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
             _buildInfoRow(
               'Created',
-              _formatDateTime(user.createdAt),
+              _formatDateTime(widget.user.createdAt),
               Icons.calendar_today,
             ),
-            if (user.lastLoginAt != null)
+            if (widget.user.lastLoginAt != null)
               _buildInfoRow(
                 'Last Login',
-                _formatDateTime(user.lastLoginAt!),
+                _formatDateTime(widget.user.lastLoginAt!),
                 Icons.login,
               ),
 
@@ -157,18 +162,11 @@ class UserDetailsDialog extends StatelessWidget {
             // Role Permissions
             const Text(
               'Role Permissions',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _buildPermissionChips(),
-            ),
+            Wrap(spacing: 8, runSpacing: 8, children: _buildPermissionChips()),
 
             const SizedBox(height: 24),
 
@@ -182,13 +180,17 @@ class UserDetailsDialog extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    showDialog(
-                      context: context,
-                      builder: (context) => EditUserDialog(user: user),
-                    );
-                  },
+                  onPressed: _isLoading ? null : _toggleUserStatus,
+                  icon: Icon(widget.user.isActive ? Icons.block : Icons.check_circle),
+                  label: Text(widget.user.isActive ? 'Deactivate' : 'Activate'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.user.isActive ? Colors.orange : Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _editUser,
                   icon: const Icon(Icons.edit),
                   label: const Text('Edit User'),
                   style: ElevatedButton.styleFrom(
@@ -202,6 +204,72 @@ class UserDetailsDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _editUser() async {
+    Navigator.of(context).pop();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => EditUserDialog(user: widget.user),
+    );
+    
+    // If user was updated, you might want to refresh the parent widget
+    if (result == true && mounted) {
+      // The parent widget should handle refreshing the user list
+      Navigator.of(context).pop(true); // Return true to indicate changes were made
+    }
+  }
+
+  Future<void> _toggleUserStatus() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final success = await ref
+          .read(userManagementProvider.notifier)
+          .toggleUserStatus(widget.user.id, !widget.user.isActive);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'User ${widget.user.name} ${!widget.user.isActive ? "activated" : "deactivated"}',
+              ),
+              backgroundColor: !widget.user.isActive ? Colors.green : Colors.orange,
+            ),
+          );
+          
+          // Close dialog and refresh parent
+          Navigator.of(context).pop(true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to update user status'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildInfoRow(String label, String value, IconData icon) {
@@ -242,22 +310,19 @@ class UserDetailsDialog extends StatelessWidget {
 
   List<Widget> _buildPermissionChips() {
     final permissions = <String>[];
-    
-    if (user.role.canCreateOrders) permissions.add('Create Orders');
-    if (user.role.canApproveOrders) permissions.add('Approve Orders');
-    if (user.role.canViewKitchenQueue) permissions.add('Kitchen Queue');
-    if (user.role.canViewBarQueue) permissions.add('Bar Queue');
-    if (user.role.canManageUsers) permissions.add('User Management');
-    if (user.role.canViewReports) permissions.add('Reports');
+
+    if (widget.user.role.canCreateOrders) permissions.add('Create Orders');
+    if (widget.user.role.canApproveOrders) permissions.add('Approve Orders');
+    if (widget.user.role.canViewKitchenQueue) permissions.add('Kitchen Queue');
+    if (widget.user.role.canViewBarQueue) permissions.add('Bar Queue');
+    if (widget.user.role.canManageUsers) permissions.add('User Management');
+    if (widget.user.role.canViewReports) permissions.add('Reports');
 
     return permissions.map((permission) {
       return Chip(
-        label: Text(
-          permission,
-          style: const TextStyle(fontSize: 12),
-        ),
-        backgroundColor: _getRoleColor(user.role).withOpacity(0.1),
-        side: BorderSide(color: _getRoleColor(user.role).withOpacity(0.3)),
+        label: Text(permission, style: const TextStyle(fontSize: 12)),
+        backgroundColor: _getRoleColor(widget.user.role).withValues(alpha: 0.1),
+        side: BorderSide(color: _getRoleColor(widget.user.role).withValues(alpha: 0.3)),
       );
     }).toList();
   }

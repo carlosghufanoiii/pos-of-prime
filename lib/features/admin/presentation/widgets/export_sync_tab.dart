@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../../shared/constants/app_theme.dart';
 import '../../../../shared/providers/export_sync_provider.dart';
 import '../../../../shared/services/offline_sync_service.dart';
@@ -27,7 +28,7 @@ class ExportSyncTab extends ConsumerWidget {
           children: [
             // Connection Status
             _buildConnectionStatus(connectivityStatus),
-            
+
             const SizedBox(height: 24),
 
             // Offline Sync Status
@@ -53,7 +54,7 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildConnectionStatus(AsyncValue<dynamic> connectivityStatus) {
+  Widget _buildConnectionStatus(AsyncValue<List<ConnectivityResult>> connectivityStatus) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -61,14 +62,14 @@ class ExportSyncTab extends ConsumerWidget {
           children: [
             Icon(
               connectivityStatus.when(
-                data: (connectivity) => connectivity.toString().contains('none')
+                data: (connectivity) => connectivity.contains(ConnectivityResult.none)
                     ? Icons.wifi_off
                     : Icons.wifi,
                 loading: () => Icons.wifi_find,
                 error: (_, __) => Icons.error,
               ),
               color: connectivityStatus.when(
-                data: (connectivity) => connectivity.toString().contains('none')
+                data: (connectivity) => connectivity.contains(ConnectivityResult.none)
                     ? Colors.red
                     : Colors.green,
                 loading: () => Colors.orange,
@@ -87,16 +88,14 @@ class ExportSyncTab extends ConsumerWidget {
                   ),
                   Text(
                     connectivityStatus.when(
-                      data: (connectivity) => connectivity.toString().contains('none')
+                      data: (connectivity) =>
+                          connectivity.contains(ConnectivityResult.none)
                           ? 'Offline - Working with local data'
                           : 'Online - Ready to sync',
                       loading: () => 'Checking connection...',
                       error: (_, __) => 'Connection check failed',
                     ),
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
               ),
@@ -107,7 +106,11 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSyncStatus(BuildContext context, WidgetRef ref, OfflineSyncStatus syncStatus) {
+  Widget _buildSyncStatus(
+    BuildContext context,
+    WidgetRef ref,
+    OfflineSyncStatus syncStatus,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -119,10 +122,7 @@ class ExportSyncTab extends ConsumerWidget {
               children: [
                 const Text(
                   'Offline Sync Status',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 if (syncStatus.isSyncing)
                   const SizedBox(
@@ -166,7 +166,9 @@ class ExportSyncTab extends ConsumerWidget {
                     ),
                     IconButton(
                       onPressed: () {
-                        ref.read(offlineSyncStatusProvider.notifier).clearError();
+                        ref
+                            .read(offlineSyncStatusProvider.notifier)
+                            .clearError();
                       },
                       icon: const Icon(Icons.close, size: 18),
                       color: Colors.red[700],
@@ -210,10 +212,7 @@ class ExportSyncTab extends ConsumerWidget {
               if (syncStatus.lastSyncAt != null)
                 Text(
                   'Last sync: ${_formatDateTime(syncStatus.lastSyncAt!)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
             ],
           ],
@@ -222,13 +221,18 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSyncStatCard(String title, int count, IconData icon, Color color) {
+  Widget _buildSyncStatCard(
+    String title,
+    int count,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -246,10 +250,7 @@ class ExportSyncTab extends ConsumerWidget {
                     color: color,
                   ),
                 ),
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 12),
-                ),
+                Text(title, style: const TextStyle(fontSize: 12)),
               ],
             ),
           ),
@@ -258,7 +259,11 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildExportSection(BuildContext context, WidgetRef ref, ExportState exportState) {
+  Widget _buildExportSection(
+    BuildContext context,
+    WidgetRef ref,
+    ExportState exportState,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -267,10 +272,7 @@ class ExportSyncTab extends ConsumerWidget {
           children: [
             const Text(
               'Data Export',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
@@ -321,7 +323,11 @@ class ExportSyncTab extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.green[700], size: 20),
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.green[700],
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -332,19 +338,21 @@ class ExportSyncTab extends ConsumerWidget {
                     if (exportState.exportedFilePath != null) ...[
                       IconButton(
                         onPressed: () {
-                          ref.read(exportProvider.notifier).shareFile(
-                            exportState.exportedFilePath!,
-                            exportState.exportedFilePath!.split('/').last,
-                          );
+                          ref
+                              .read(exportProvider.notifier)
+                              .shareFile(
+                                exportState.exportedFilePath!,
+                                exportState.exportedFilePath!.split('/').last,
+                              );
                         },
                         icon: const Icon(Icons.share, size: 18),
                         tooltip: 'Share file',
                       ),
                       IconButton(
                         onPressed: () {
-                          ref.read(exportProvider.notifier).openFile(
-                            exportState.exportedFilePath!,
-                          );
+                          ref
+                              .read(exportProvider.notifier)
+                              .openFile(exportState.exportedFilePath!);
                         },
                         icon: const Icon(Icons.open_in_new, size: 18),
                         tooltip: 'Open file',
@@ -425,10 +433,7 @@ class ExportSyncTab extends ConsumerWidget {
           children: [
             const Text(
               'Quick Actions',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -461,7 +466,12 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onPressed) {
+  Widget _buildActionButton(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 18),
@@ -474,7 +484,11 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildOfflineDataOverview(BuildContext context, WidgetRef ref, OfflineSyncStatus syncStatus) {
+  Widget _buildOfflineDataOverview(
+    BuildContext context,
+    WidgetRef ref,
+    OfflineSyncStatus syncStatus,
+  ) {
     if (!syncStatus.isInitialized) return const SizedBox.shrink();
 
     return Card(
@@ -485,10 +499,7 @@ class ExportSyncTab extends ConsumerWidget {
           children: [
             const Text(
               'Offline Data Overview',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -518,13 +529,18 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildDataOverviewCard(String title, String value, IconData icon, Color color) {
+  Widget _buildDataOverviewCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,11 +576,13 @@ class ExportSyncTab extends ConsumerWidget {
   // Helper methods
   Future<void> _exportOrders(WidgetRef ref, String format) async {
     final offlineOrders = await ref.read(offlineOrdersProvider.future);
-    
+
     if (format == 'csv') {
       await ref.read(exportProvider.notifier).exportOrdersToCSV(offlineOrders);
     } else if (format == 'excel') {
-      await ref.read(exportProvider.notifier).exportOrdersToExcel(offlineOrders);
+      await ref
+          .read(exportProvider.notifier)
+          .exportOrdersToExcel(offlineOrders);
     }
   }
 
@@ -621,7 +639,9 @@ class ExportSyncTab extends ConsumerWidget {
                 await OfflineSyncService.clearOfflineData();
                 ref.invalidate(offlineSyncStatusProvider);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Offline data cleared successfully')),
+                  const SnackBar(
+                    content: Text('Offline data cleared successfully'),
+                  ),
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(

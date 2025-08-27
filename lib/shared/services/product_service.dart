@@ -1,10 +1,11 @@
 import '../models/product.dart';
-import '../repositories/appwrite_product_repository.dart';
+import '../repositories/firebase_product_repository.dart';
 
 /// Shared product service for managing products across the application
-/// Uses Appwrite database exclusively
+/// Uses Firebase database exclusively
 class ProductService {
-  static final AppwriteProductRepository _repository = AppwriteProductRepository();
+  static final FirebaseProductRepository _repository =
+      FirebaseProductRepository();
 
   /// Get all products
   static Future<List<Product>> getProducts() async {
@@ -34,7 +35,9 @@ class ProductService {
   }
 
   /// Get products by preparation area
-  static Future<List<Product>> getProductsByPreparationArea(PreparationArea area) async {
+  static Future<List<Product>> getProductsByPreparationArea(
+    PreparationArea area,
+  ) async {
     try {
       return await _repository.getProductsByPreparationArea(area);
     } catch (e) {

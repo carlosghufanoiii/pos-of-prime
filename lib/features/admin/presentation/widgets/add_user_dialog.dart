@@ -14,7 +14,7 @@ class AddUserDialog extends ConsumerStatefulWidget {
 
 class _AddUserDialogState extends ConsumerState<AddUserDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _displayNameController = TextEditingController();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _employeeIdController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -30,7 +30,7 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
 
   @override
   void dispose() {
-    _displayNameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _employeeIdController.dispose();
     _phoneController.dispose();
@@ -43,37 +43,71 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: Colors.transparent,
       child: Container(
         width: 600,
         constraints: const BoxConstraints(maxHeight: 700),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceGrey,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+          ),
+        ),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              children: [
-                Icon(
-                  Icons.person_add,
-                  size: 32,
-                  color: AppTheme.primaryColor,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Add New User',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.person_add,
+                      size: 24,
+                      color: AppTheme.primaryColor,
                     ),
                   ),
-                ),
-                IconButton(
-                  onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Add New User',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      icon: Icon(Icons.close, color: AppTheme.primaryColor),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -87,51 +121,104 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Personal Information Section
-                      const Text(
-                        'Personal Information',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: AppTheme.primaryColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Personal Information',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
 
-                      TextFormField(
-                        controller: _displayNameController,
-                        enabled: !_isLoading,
-                        decoration: const InputDecoration(
-                          labelText: 'Full Name *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter full name';
-                          }
-                          return null;
-                        },
+                        child: TextFormField(
+                          controller: _nameController,
+                          enabled: !_isLoading,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Full Name *',
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(16),
+                            prefixIcon: Icon(
+                              Icons.person,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter full name';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
 
                       const SizedBox(height: 16),
 
-                      TextFormField(
-                        controller: _emailController,
-                        enabled: !_isLoading,
-                        decoration: const InputDecoration(
-                          labelText: 'Email Address *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
                         ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter email address';
-                          }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                            return 'Please enter a valid email address';
-                          }
-                          return null;
-                        },
+                        child: TextFormField(
+                          controller: _emailController,
+                          enabled: !_isLoading,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Email Address *',
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(16),
+                            prefixIcon: Icon(
+                              Icons.email,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter email address';
+                            }
+                            if (!RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            ).hasMatch(value)) {
+                              return 'Please enter a valid email address';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
 
                       const SizedBox(height: 16),
@@ -139,27 +226,61 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
                       Row(
                         children: [
                           Expanded(
-                            child: TextFormField(
-                              controller: _employeeIdController,
-                              enabled: !_isLoading,
-                              decoration: const InputDecoration(
-                                labelText: 'Employee ID',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.badge),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.lightGrey,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: TextFormField(
+                                controller: _employeeIdController,
+                                enabled: !_isLoading,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  labelText: 'Employee ID',
+                                  labelStyle: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.all(16),
+                                  prefixIcon: Icon(
+                                    Icons.badge,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: TextFormField(
-                              controller: _phoneController,
-                              enabled: !_isLoading,
-                              decoration: const InputDecoration(
-                                labelText: 'Phone Number',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.phone),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.lightGrey,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                ),
                               ),
-                              keyboardType: TextInputType.phone,
+                              child: TextFormField(
+                                controller: _phoneController,
+                                enabled: !_isLoading,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  labelText: 'Phone Number',
+                                  labelStyle: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.all(16),
+                                  prefixIcon: Icon(
+                                    Icons.phone,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                keyboardType: TextInputType.phone,
+                              ),
                             ),
                           ),
                         ],
@@ -167,124 +288,241 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
 
                       const SizedBox(height: 16),
 
-                      TextFormField(
-                        controller: _addressController,
-                        enabled: !_isLoading,
-                        decoration: const InputDecoration(
-                          labelText: 'Address',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.location_on),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
                         ),
-                        maxLines: 2,
+                        child: TextFormField(
+                          controller: _addressController,
+                          enabled: !_isLoading,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Address',
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(16),
+                            prefixIcon: Icon(
+                              Icons.location_on,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          maxLines: 2,
+                        ),
                       ),
 
                       const SizedBox(height: 24),
 
                       // Account Information Section
-                      const Text(
-                        'Account Information',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      DropdownButtonFormField<UserRole>(
-                        value: _selectedRole,
-                        decoration: const InputDecoration(
-                          labelText: 'Role *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.work),
-                        ),
-                        items: UserRole.values.map((role) {
-                          return DropdownMenuItem(
-                            value: role,
-                            child: Text(role.displayName),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedRole = value!;
-                          });
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        controller: _passwordController,
-                        enabled: !_isLoading,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password *',
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.lock),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.admin_panel_settings,
+                              color: AppTheme.primaryColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Account Information',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-
                       const SizedBox(height: 16),
 
-                      TextFormField(
-                        controller: _confirmPasswordController,
-                        enabled: !_isLoading,
-                        obscureText: _obscureConfirmPassword,
-                        decoration: InputDecoration(
-                          labelText: 'Confirm Password *',
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
-                              });
-                            },
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please confirm password';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
+                        child: DropdownButtonFormField<UserRole>(
+                          initialValue: _selectedRole,
+                          dropdownColor: AppTheme.lightGrey,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Role *',
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(16),
+                            prefixIcon: Icon(
+                              Icons.work,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          items: UserRole.values.map((role) {
+                            return DropdownMenuItem(
+                              value: role,
+                              child: Text(
+                                role.name,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedRole = value!;
+                            });
+                          },
+                        ),
                       ),
 
                       const SizedBox(height: 16),
 
-                      SwitchListTile(
-                        title: const Text('Active Account'),
-                        subtitle: const Text('User can log in and access the system'),
-                        value: _isActive,
-                        onChanged: _isLoading ? null : (value) {
-                          setState(() {
-                            _isActive = value;
-                          });
-                        },
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: TextFormField(
+                          controller: _passwordController,
+                          enabled: !_isLoading,
+                          obscureText: _obscurePassword,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Password *',
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(16),
+                            prefixIcon: Icon(
+                              Icons.lock,
+                              color: AppTheme.primaryColor,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter password';
+                            }
+                            if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: TextFormField(
+                          controller: _confirmPasswordController,
+                          enabled: !_isLoading,
+                          obscureText: _obscureConfirmPassword,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Confirm Password *',
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(16),
+                            prefixIcon: Icon(
+                              Icons.lock_outline,
+                              color: AppTheme.primaryColor,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please confirm password';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Passwords do not match';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Active Account',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'User can log in and access the system',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          value: _isActive,
+                          activeThumbColor: AppTheme.primaryColor,
+                          onChanged: _isLoading
+                              ? null
+                              : (value) {
+                                  setState(() {
+                                    _isActive = value;
+                                  });
+                                },
+                        ),
                       ),
                     ],
                   ),
@@ -295,33 +533,69 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
             const SizedBox(height: 24),
 
             // Action Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.lightGrey.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _createUser,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white.withValues(alpha: 0.8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Cancel'),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _createUser,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      elevation: 8,
+                      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add, size: 18),
+                              SizedBox(width: 6),
+                              Text('Create User'),
+                            ],
                           ),
-                        )
-                      : const Text('Create User'),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -339,46 +613,85 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
     });
 
     try {
+      // Prepare user data - Firebase Auth will generate the ID
       final user = AppUser(
-        id: 'user_${DateTime.now().millisecondsSinceEpoch}',
+        id: '', // Will be set by Firebase Auth
         email: _emailController.text.trim(),
-        displayName: _displayNameController.text.trim(),
+        name: _nameController.text.trim(),
         role: _selectedRole,
         isActive: _isActive,
         createdAt: DateTime.now(),
-        employeeId: _employeeIdController.text.trim().isNotEmpty 
-            ? _employeeIdController.text.trim() 
+        updatedAt: DateTime.now(),
+        employeeId: _employeeIdController.text.trim().isNotEmpty
+            ? _employeeIdController.text.trim()
             : null,
-        phoneNumber: _phoneController.text.trim().isNotEmpty 
-            ? _phoneController.text.trim() 
+        phoneNumber: _phoneController.text.trim().isNotEmpty
+            ? _phoneController.text.trim()
             : null,
-        address: _addressController.text.trim().isNotEmpty 
-            ? _addressController.text.trim() 
+        address: _addressController.text.trim().isNotEmpty
+            ? _addressController.text.trim()
             : null,
       );
 
+      // Show loading indicator and close dialog quickly for better UX
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text('Creating user ${user.name}...'),
+              ],
+            ),
+            backgroundColor: AppTheme.primaryColor,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Create user in background
       final success = await ref
           .read(userManagementProvider.notifier)
           .createUser(user, _passwordController.text);
 
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        
         if (success) {
-          Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('User ${user.displayName} created successfully'),
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('User ${user.name} created successfully'),
+                ],
+              ),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to create user. Email may already exist.'),
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.error, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Failed to create user. Email may already exist.'),
+                ],
+              ),
               backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
             ),
           );
         }
@@ -388,12 +701,9 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }

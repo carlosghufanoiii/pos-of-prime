@@ -1,20 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/services/order_service.dart';
-import '../../../shared/providers/realtime_order_provider.dart';
+import '../../../shared/providers/firebase_realtime_order_provider.dart';
 
 // Pending orders provider (now realtime)
 final pendingOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  return ref.watch(realtimePendingOrdersProvider);
+  return ref.watch(firebasePendingOrdersProvider);
 });
 
 // Approved orders provider (orders approved but not yet paid)
 final approvedOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
-      final approvedOrders = orders.where((order) => order.status == OrderStatus.approved).toList();
+      final approvedOrders = orders
+          .where((order) => order.status == OrderStatus.approved)
+          .toList();
       return AsyncValue.data(approvedOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -24,38 +26,46 @@ final approvedOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
 
 // All cashier orders provider (now realtime)
 final cashierOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  return ref.watch(realtimeOrdersProvider);
+  return ref.watch(firebaseOrdersStreamProvider);
 });
 
 // Order filter state
 enum OrderFilter { all, pending, approved, paid }
 
-final orderFilterProvider = StateProvider<OrderFilter>((ref) => OrderFilter.pending);
+final orderFilterProvider = StateProvider<OrderFilter>(
+  (ref) => OrderFilter.pending,
+);
 
 // Filtered orders provider (now realtime)
 final filteredOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
   final filter = ref.watch(orderFilterProvider);
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
       List<Order> filteredOrders;
-      
+
       switch (filter) {
         case OrderFilter.pending:
-          filteredOrders = orders.where((order) => order.status == OrderStatus.pendingApproval).toList();
+          filteredOrders = orders
+              .where((order) => order.status == OrderStatus.pendingApproval)
+              .toList();
           break;
         case OrderFilter.approved:
-          filteredOrders = orders.where((order) => order.status == OrderStatus.approved).toList();
+          filteredOrders = orders
+              .where((order) => order.status == OrderStatus.approved)
+              .toList();
           break;
         case OrderFilter.paid:
-          filteredOrders = orders.where((order) => order.paymentMethod != null).toList();
+          filteredOrders = orders
+              .where((order) => order.paymentMethod != null)
+              .toList();
           break;
         case OrderFilter.all:
           filteredOrders = orders;
           break;
       }
-      
+
       return AsyncValue.data(filteredOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -91,7 +101,8 @@ class PaymentState {
   }) {
     return PaymentState(
       selectedOrder: selectedOrder ?? this.selectedOrder,
-      selectedPaymentMethod: selectedPaymentMethod ?? this.selectedPaymentMethod,
+      selectedPaymentMethod:
+          selectedPaymentMethod ?? this.selectedPaymentMethod,
       amountReceived: amountReceived ?? this.amountReceived,
       changeAmount: changeAmount ?? this.changeAmount,
       isProcessing: isProcessing ?? this.isProcessing,
@@ -113,14 +124,11 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   }
 
   void setAmountReceived(double amount) {
-    final changeAmount = state.selectedOrder != null 
+    final changeAmount = state.selectedOrder != null
         ? amount - state.selectedOrder!.total
         : 0.0;
-    
-    state = state.copyWith(
-      amountReceived: amount,
-      changeAmount: changeAmount,
-    );
+
+    state = state.copyWith(amountReceived: amount, changeAmount: changeAmount);
   }
 
   Future<bool> approveOrder(String cashierId, String cashierName) async {
@@ -146,10 +154,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isProcessing: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }
@@ -181,10 +186,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isProcessing: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }
@@ -212,10 +214,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isProcessing: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }
@@ -230,7 +229,9 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
 }
 
 // Payment provider
-final paymentProvider = StateNotifierProvider<PaymentNotifier, PaymentState>((ref) {
+final paymentProvider = StateNotifierProvider<PaymentNotifier, PaymentState>((
+  ref,
+) {
   return PaymentNotifier();
 });
 

@@ -5,15 +5,18 @@ import '../models/app_user.dart';
 import '../services/export_service.dart';
 import '../services/offline_sync_service.dart';
 
-// Connection status provider
-final connectivityProvider = StreamProvider<ConnectivityResult>((ref) {
-  return Connectivity().onConnectivityChanged;
+// Connection status provider - Convert single result to list
+final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) {
+  return Connectivity().onConnectivityChanged.map((result) {
+    return [result]; // Always wrap in list
+  });
 });
 
 // Offline sync status provider
-final offlineSyncStatusProvider = StateNotifierProvider<OfflineSyncStatusNotifier, OfflineSyncStatus>((ref) {
-  return OfflineSyncStatusNotifier();
-});
+final offlineSyncStatusProvider =
+    StateNotifierProvider<OfflineSyncStatusNotifier, OfflineSyncStatus>((ref) {
+      return OfflineSyncStatusNotifier();
+    });
 
 class OfflineSyncStatus {
   final bool isInitialized;
@@ -87,7 +90,7 @@ class OfflineSyncStatusNotifier extends StateNotifier<OfflineSyncStatus> {
       }
 
       final pendingItems = await OfflineSyncService.getPendingSyncItems();
-      
+
       for (final item in pendingItems) {
         try {
           // In a real app, sync with actual backend here
@@ -103,15 +106,9 @@ class OfflineSyncStatusNotifier extends StateNotifier<OfflineSyncStatus> {
       }
 
       await _updateStats();
-      state = state.copyWith(
-        isSyncing: false,
-        lastSyncAt: DateTime.now(),
-      );
+      state = state.copyWith(isSyncing: false, lastSyncAt: DateTime.now());
     } catch (e) {
-      state = state.copyWith(
-        isSyncing: false,
-        error: 'Sync failed: $e',
-      );
+      state = state.copyWith(isSyncing: false, error: 'Sync failed: $e');
     }
   }
 
@@ -139,7 +136,9 @@ class OfflineSyncStatusNotifier extends StateNotifier<OfflineSyncStatus> {
 }
 
 // Export provider
-final exportProvider = StateNotifierProvider<ExportNotifier, ExportState>((ref) {
+final exportProvider = StateNotifierProvider<ExportNotifier, ExportState>((
+  ref,
+) {
   return ExportNotifier();
 });
 
@@ -185,10 +184,7 @@ class ExportNotifier extends StateNotifier<ExportState> {
         exportedFilePath: filePath,
       );
     } catch (e) {
-      state = state.copyWith(
-        isExporting: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isExporting: false, error: e.toString());
     }
   }
 
@@ -203,10 +199,7 @@ class ExportNotifier extends StateNotifier<ExportState> {
         exportedFilePath: filePath,
       );
     } catch (e) {
-      state = state.copyWith(
-        isExporting: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isExporting: false, error: e.toString());
     }
   }
 
@@ -221,14 +214,14 @@ class ExportNotifier extends StateNotifier<ExportState> {
         exportedFilePath: filePath,
       );
     } catch (e) {
-      state = state.copyWith(
-        isExporting: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isExporting: false, error: e.toString());
     }
   }
 
-  Future<void> generateBackupFile(List<Order> orders, List<AppUser> users) async {
+  Future<void> generateBackupFile(
+    List<Order> orders,
+    List<AppUser> users,
+  ) async {
     state = state.copyWith(isExporting: true, error: null);
 
     try {
@@ -239,10 +232,7 @@ class ExportNotifier extends StateNotifier<ExportState> {
         exportedFilePath: filePath,
       );
     } catch (e) {
-      state = state.copyWith(
-        isExporting: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isExporting: false, error: e.toString());
     }
   }
 
@@ -279,6 +269,10 @@ final offlineUsersProvider = FutureProvider<List<AppUser>>((ref) async {
 });
 
 // Sales report provider
-final salesReportProvider = FutureProvider.family<Map<String, dynamic>, List<Order>>((ref, orders) async {
-  return ExportService.generateSalesReport(orders);
-});
+final salesReportProvider =
+    FutureProvider.family<Map<String, dynamic>, List<Order>>((
+      ref,
+      orders,
+    ) async {
+      return ExportService.generateSalesReport(orders);
+    });

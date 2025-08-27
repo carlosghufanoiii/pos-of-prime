@@ -43,12 +43,16 @@ class WaiterService {
       }
 
       if (order.status != OrderStatus.ready) {
-        throw Exception('Order is not ready to be served. Current status: ${order.status}');
+        throw Exception(
+          'Order is not ready to be served. Current status: ${order.status}',
+        );
       }
 
       // Only the original waiter should be able to mark it as served
       if (order.waiterId != waiterId) {
-        throw Exception('Only the original waiter can mark this order as served');
+        throw Exception(
+          'Only the original waiter can mark this order as served',
+        );
       }
 
       // Mark as served through the cashier repository (since it has the serve functionality)
@@ -76,24 +80,31 @@ class WaiterService {
 
   /// Check if an order has items ready from kitchen
   static bool hasKitchenItems(Order order) {
-    return order.items.any((item) => 
-        item.product.preparationArea == PreparationArea.kitchen);
+    return order.items.any(
+      (item) => item.product.preparationArea == PreparationArea.kitchen,
+    );
   }
 
   /// Check if an order has items ready from bar
   static bool hasBarItems(Order order) {
-    return order.items.any((item) => 
-        item.product.preparationArea == PreparationArea.bar);
+    return order.items.any(
+      (item) => item.product.preparationArea == PreparationArea.bar,
+    );
   }
 
   /// Get order preparation summary
   static Map<String, dynamic> getOrderPreparationSummary(Order order) {
-    final kitchenItems = order.items.where((item) => 
-        item.product.preparationArea == PreparationArea.kitchen).toList();
-    final barItems = order.items.where((item) => 
-        item.product.preparationArea == PreparationArea.bar).toList();
-    final noPrepItems = order.items.where((item) => 
-        item.product.preparationArea == PreparationArea.none).toList();
+    final kitchenItems = order.items
+        .where(
+          (item) => item.product.preparationArea == PreparationArea.kitchen,
+        )
+        .toList();
+    final barItems = order.items
+        .where((item) => item.product.preparationArea == PreparationArea.bar)
+        .toList();
+    final noPrepItems = order.items
+        .where((item) => item.product.preparationArea == PreparationArea.none)
+        .toList();
 
     return {
       'hasKitchenItems': kitchenItems.isNotEmpty,

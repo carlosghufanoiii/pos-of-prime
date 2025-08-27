@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:prime_pos/shared/utils/logger.dart';
 import '../models/order.dart';
 import '../models/app_user.dart';
 import '../models/product.dart';
@@ -26,7 +27,7 @@ class OfflineSyncService {
     try {
       // Initialize Hive
       await Hive.initFlutter();
-      
+
       // Open Hive boxes
       _ordersBox = await Hive.openBox<Map>(_ordersBoxName);
       _usersBox = await Hive.openBox<Map>(_usersBoxName);
@@ -35,10 +36,17 @@ class OfflineSyncService {
 
       // Initialize SQLite database
       await _initializeDatabase();
-      
-      print('OfflineSyncService initialized successfully');
+
+      Logger.info(
+        'OfflineSyncService initialized successfully',
+        tag: 'OfflineSyncService',
+      );
     } catch (e) {
-      print('Failed to initialize OfflineSyncService: $e');
+      Logger.error(
+        'Failed to initialize OfflineSyncService',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       throw Exception('Failed to initialize offline storage: $e');
     }
   }
@@ -127,13 +135,23 @@ class OfflineSyncService {
       )
     ''');
 
-    print('Database tables created successfully');
+    Logger.info(
+      'Database tables created successfully',
+      tag: 'OfflineSyncService',
+    );
   }
 
   /// Upgrade database schema
-  static Future<void> _upgradeDatabase(Database db, int oldVersion, int newVersion) async {
+  static Future<void> _upgradeDatabase(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
     // Handle database migrations here
-    print('Upgrading database from version $oldVersion to $newVersion');
+    Logger.info(
+      'Upgrading database from version $oldVersion to $newVersion',
+      tag: 'OfflineSyncService',
+    );
   }
 
   /// Check network connectivity
@@ -153,36 +171,39 @@ class OfflineSyncService {
       await _ordersBox!.put(order.id, order.toJson());
 
       // Save to SQLite
-      await _database!.insert(
-        'orders',
-        {
-          'id': order.id,
-          'order_number': order.orderNumber,
-          'customer_name': order.customerName,
-          'table_number': order.tableNumber,
-          'waiter_name': order.waiterName,
-          'status': order.status.name,
-          'subtotal': order.subtotal,
-          'tax': order.taxAmount,
-          'total': order.total,
-          'payment_method': order.paymentMethod?.name,
-          'created_at': order.createdAt.toIso8601String(),
-          'updated_at': order.updatedAt.toIso8601String(),
-          'served_at': order.servedAt?.toIso8601String(),
-          'prep_started_at': order.prepStartedAt?.toIso8601String(),
-          'ready_at': order.readyAt?.toIso8601String(),
-          'synced': 0,
-          'items': jsonEncode(order.items.map((item) => item.toJson()).toList()),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await _database!.insert('orders', {
+        'id': order.id,
+        'order_number': order.orderNumber,
+        'customer_name': order.customerName,
+        'table_number': order.tableNumber,
+        'waiter_name': order.waiterName,
+        'status': order.status.name,
+        'subtotal': order.subtotal,
+        'tax': order.taxAmount,
+        'total': order.total,
+        'payment_method': order.paymentMethod?.name,
+        'created_at': order.createdAt.toIso8601String(),
+        'updated_at': order.updatedAt.toIso8601String(),
+        'served_at': order.servedAt?.toIso8601String(),
+        'prep_started_at': order.prepStartedAt?.toIso8601String(),
+        'ready_at': order.readyAt?.toIso8601String(),
+        'synced': 0,
+        'items': jsonEncode(order.items.map((item) => item.toJson()).toList()),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // Add to sync queue
       await _addToSyncQueue('order', order.id, 'create', order.toJson());
-      
-      print('Order ${order.orderNumber} saved offline');
+
+      Logger.info(
+        'Order ${order.orderNumber} saved offline',
+        tag: 'OfflineSyncService',
+      );
     } catch (e) {
-      print('Failed to save order offline: $e');
+      Logger.error(
+        'Failed to save order offline',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       throw Exception('Failed to save order offline: $e');
     }
   }
@@ -210,7 +231,9 @@ class OfflineSyncService {
           'served_at': order.servedAt?.toIso8601String(),
           'prep_started_at': order.prepStartedAt?.toIso8601String(),
           'ready_at': order.readyAt?.toIso8601String(),
-          'items': jsonEncode(order.items.map((item) => item.toJson()).toList()),
+          'items': jsonEncode(
+            order.items.map((item) => item.toJson()).toList(),
+          ),
         },
         where: 'id = ?',
         whereArgs: [order.id],
@@ -218,10 +241,17 @@ class OfflineSyncService {
 
       // Add to sync queue
       await _addToSyncQueue('order', order.id, 'update', order.toJson());
-      
-      print('Order ${order.orderNumber} updated offline');
+
+      Logger.info(
+        'Order ${order.orderNumber} updated offline',
+        tag: 'OfflineSyncService',
+      );
     } catch (e) {
-      print('Failed to update order offline: $e');
+      Logger.error(
+        'Failed to update order offline',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       throw Exception('Failed to update order offline: $e');
     }
   }
@@ -229,28 +259,41 @@ class OfflineSyncService {
   /// Get offline orders
   static Future<List<Order>> getOfflineOrders() async {
     try {
-      final results = await _database!.query('orders', orderBy: 'created_at DESC');
-      
+      final results = await _database!.query(
+        'orders',
+        orderBy: 'created_at DESC',
+      );
+
       final orders = <Order>[];
       for (final row in results) {
         try {
           final itemsJson = jsonDecode(row['items'] as String) as List;
-          final items = itemsJson.map((item) => OrderItem.fromJson(item)).toList();
-          
-          final order = Order.fromJson({
-            ...row,
-            'items': items.map((item) => item.toJson()).toList(),
-          } as Map<String, dynamic>);
-          
+          final items = itemsJson
+              .map((item) => OrderItem.fromJson(item))
+              .toList();
+
+          final order = Order.fromJson(
+            {...row, 'items': items.map((item) => item.toJson()).toList()}
+                as Map<String, dynamic>,
+          );
+
           orders.add(order);
         } catch (e) {
-          print('Failed to parse offline order: $e');
+          Logger.warning(
+            'Failed to parse offline order',
+            error: e,
+            tag: 'OfflineSyncService',
+          );
         }
       }
-      
+
       return orders;
     } catch (e) {
-      print('Failed to get offline orders: $e');
+      Logger.error(
+        'Failed to get offline orders',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       return [];
     }
   }
@@ -262,30 +305,30 @@ class OfflineSyncService {
       await _usersBox!.put(user.id, user.toJson());
 
       // Save to SQLite
-      await _database!.insert(
-        'users',
-        {
-          'id': user.id,
-          'email': user.email,
-          'display_name': user.displayName,
-          'role': user.role.name,
-          'is_active': user.isActive ? 1 : 0,
-          'created_at': user.createdAt.toIso8601String(),
-          'last_login_at': user.lastLoginAt?.toIso8601String(),
-          'employee_id': user.employeeId,
-          'phone_number': user.phoneNumber,
-          'address': user.address,
-          'synced': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await _database!.insert('users', {
+        'id': user.id,
+        'email': user.email,
+        'display_name': user.name,
+        'role': user.role.name,
+        'is_active': user.isActive ? 1 : 0,
+        'created_at': user.createdAt.toIso8601String(),
+        'last_login_at': user.lastLoginAt?.toIso8601String(),
+        'employee_id': user.employeeId,
+        'phone_number': user.phoneNumber,
+        'address': user.address,
+        'synced': 0,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // Add to sync queue
       await _addToSyncQueue('user', user.id, 'create', user.toJson());
-      
-      print('User ${user.displayName} saved offline');
+
+      Logger.info('User ${user.name} saved offline', tag: 'OfflineSyncService');
     } catch (e) {
-      print('Failed to save user offline: $e');
+      Logger.error(
+        'Failed to save user offline',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       throw Exception('Failed to save user offline: $e');
     }
   }
@@ -293,21 +336,32 @@ class OfflineSyncService {
   /// Get offline users
   static Future<List<AppUser>> getOfflineUsers() async {
     try {
-      final results = await _database!.query('users', orderBy: 'display_name ASC');
-      
+      final results = await _database!.query(
+        'users',
+        orderBy: 'display_name ASC',
+      );
+
       final users = <AppUser>[];
       for (final row in results) {
         try {
           final user = AppUser.fromJson(row as Map<String, dynamic>);
           users.add(user);
         } catch (e) {
-          print('Failed to parse offline user: $e');
+          Logger.warning(
+            'Failed to parse offline user',
+            error: e,
+            tag: 'OfflineSyncService',
+          );
         }
       }
-      
+
       return users;
     } catch (e) {
-      print('Failed to get offline users: $e');
+      Logger.error(
+        'Failed to get offline users',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       return [];
     }
   }
@@ -319,29 +373,32 @@ class OfflineSyncService {
       await _productsBox!.put(product.id, product.toJson());
 
       // Save to SQLite
-      await _database!.insert(
-        'products',
-        {
-          'id': product.id,
-          'name': product.name,
-          'category': product.category,
-          'price': product.price,
-          'description': product.description,
-          'image_url': product.imageUrl,
-          'is_available': product.isActive ? 1 : 0,
-          'preparation_area': product.preparationArea.name,
-          'is_alcoholic': product.isAlcoholic ? 1 : 0,
-          'synced': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await _database!.insert('products', {
+        'id': product.id,
+        'name': product.name,
+        'category': product.category,
+        'price': product.price,
+        'description': product.description,
+        'image_url': product.imageUrl,
+        'is_available': product.isActive ? 1 : 0,
+        'preparation_area': product.preparationArea.name,
+        'is_alcoholic': product.isAlcoholic ? 1 : 0,
+        'synced': 0,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // Add to sync queue
       await _addToSyncQueue('product', product.id, 'create', product.toJson());
-      
-      print('Product ${product.name} saved offline');
+
+      Logger.info(
+        'Product ${product.name} saved offline',
+        tag: 'OfflineSyncService',
+      );
     } catch (e) {
-      print('Failed to save product offline: $e');
+      Logger.error(
+        'Failed to save product offline',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       throw Exception('Failed to save product offline: $e');
     }
   }
@@ -350,20 +407,28 @@ class OfflineSyncService {
   static Future<List<Product>> getOfflineProducts() async {
     try {
       final results = await _database!.query('products', orderBy: 'name ASC');
-      
+
       final products = <Product>[];
       for (final row in results) {
         try {
           final product = Product.fromJson(row as Map<String, dynamic>);
           products.add(product);
         } catch (e) {
-          print('Failed to parse offline product: $e');
+          Logger.warning(
+            'Failed to parse offline product',
+            error: e,
+            tag: 'OfflineSyncService',
+          );
         }
       }
-      
+
       return products;
     } catch (e) {
-      print('Failed to get offline products: $e');
+      Logger.error(
+        'Failed to get offline products',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       return [];
     }
   }
@@ -385,7 +450,11 @@ class OfflineSyncService {
         'retry_count': 0,
       });
     } catch (e) {
-      print('Failed to add to sync queue: $e');
+      Logger.error(
+        'Failed to add to sync queue',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
     }
   }
 
@@ -396,16 +465,24 @@ class OfflineSyncService {
         'sync_queue',
         orderBy: 'created_at ASC',
       );
-      
+
       return results;
     } catch (e) {
-      print('Failed to get pending sync items: $e');
+      Logger.error(
+        'Failed to get pending sync items',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       return [];
     }
   }
 
   /// Mark item as synced
-  static Future<void> markItemSynced(int syncQueueId, String entityType, String entityId) async {
+  static Future<void> markItemSynced(
+    int syncQueueId,
+    String entityType,
+    String entityId,
+  ) async {
     try {
       // Remove from sync queue
       await _database!.delete(
@@ -436,10 +513,17 @@ class OfflineSyncService {
         where: 'id = ?',
         whereArgs: [entityId],
       );
-      
-      print('Marked $entityType $entityId as synced');
+
+      Logger.debug(
+        'Marked $entityType $entityId as synced',
+        tag: 'OfflineSyncService',
+      );
     } catch (e) {
-      print('Failed to mark item as synced: $e');
+      Logger.error(
+        'Failed to mark item as synced',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
     }
   }
 
@@ -451,7 +535,11 @@ class OfflineSyncService {
         [syncQueueId],
       );
     } catch (e) {
-      print('Failed to increment retry count: $e');
+      Logger.error(
+        'Failed to increment retry count',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
     }
   }
 
@@ -469,10 +557,14 @@ class OfflineSyncService {
       await _database?.delete('users');
       await _database?.delete('products');
       await _database?.delete('sync_queue');
-      
-      print('All offline data cleared');
+
+      Logger.info('All offline data cleared', tag: 'OfflineSyncService');
     } catch (e) {
-      print('Failed to clear offline data: $e');
+      Logger.error(
+        'Failed to clear offline data',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       throw Exception('Failed to clear offline data: $e');
     }
   }
@@ -480,10 +572,18 @@ class OfflineSyncService {
   /// Get offline storage statistics
   static Future<Map<String, int>> getOfflineStats() async {
     try {
-      final ordersCount = await _database!.rawQuery('SELECT COUNT(*) as count FROM orders WHERE synced = 0');
-      final usersCount = await _database!.rawQuery('SELECT COUNT(*) as count FROM users WHERE synced = 0');
-      final productsCount = await _database!.rawQuery('SELECT COUNT(*) as count FROM products WHERE synced = 0');
-      final pendingSyncCount = await _database!.rawQuery('SELECT COUNT(*) as count FROM sync_queue');
+      final ordersCount = await _database!.rawQuery(
+        'SELECT COUNT(*) as count FROM orders WHERE synced = 0',
+      );
+      final usersCount = await _database!.rawQuery(
+        'SELECT COUNT(*) as count FROM users WHERE synced = 0',
+      );
+      final productsCount = await _database!.rawQuery(
+        'SELECT COUNT(*) as count FROM products WHERE synced = 0',
+      );
+      final pendingSyncCount = await _database!.rawQuery(
+        'SELECT COUNT(*) as count FROM sync_queue',
+      );
 
       return {
         'unsyncedOrders': ordersCount.first['count'] as int,
@@ -492,7 +592,11 @@ class OfflineSyncService {
         'pendingSyncItems': pendingSyncCount.first['count'] as int,
       };
     } catch (e) {
-      print('Failed to get offline stats: $e');
+      Logger.error(
+        'Failed to get offline stats',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
       return {
         'unsyncedOrders': 0,
         'unsyncedUsers': 0,
@@ -510,10 +614,14 @@ class OfflineSyncService {
       await _productsBox?.close();
       await _syncQueueBox?.close();
       await _database?.close();
-      
-      print('OfflineSyncService disposed');
+
+      Logger.info('OfflineSyncService disposed', tag: 'OfflineSyncService');
     } catch (e) {
-      print('Failed to dispose OfflineSyncService: $e');
+      Logger.error(
+        'Failed to dispose OfflineSyncService',
+        error: e,
+        tag: 'OfflineSyncService',
+      );
     }
   }
 }

@@ -3,10 +3,11 @@ import 'user_role.dart';
 class AppUser {
   final String id;
   final String email;
-  final String displayName;
+  final String name;
   final UserRole role;
   final bool isActive;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final DateTime? lastLoginAt;
   final String? photoUrl;
   final String? phoneNumber;
@@ -16,10 +17,11 @@ class AppUser {
   const AppUser({
     required this.id,
     required this.email,
-    required this.displayName,
+    required this.name,
     required this.role,
     this.isActive = true,
     required this.createdAt,
+    required this.updatedAt,
     this.lastLoginAt,
     this.photoUrl,
     this.phoneNumber,
@@ -30,10 +32,11 @@ class AppUser {
   AppUser copyWith({
     String? id,
     String? email,
-    String? displayName,
+    String? name,
     UserRole? role,
     bool? isActive,
     DateTime? createdAt,
+    DateTime? updatedAt,
     DateTime? lastLoginAt,
     String? photoUrl,
     String? phoneNumber,
@@ -43,10 +46,11 @@ class AppUser {
     return AppUser(
       id: id ?? this.id,
       email: email ?? this.email,
-      displayName: displayName ?? this.displayName,
+      name: name ?? this.name,
       role: role ?? this.role,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? DateTime.now(),
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       photoUrl: photoUrl ?? this.photoUrl,
       phoneNumber: phoneNumber ?? this.phoneNumber,
@@ -59,10 +63,11 @@ class AppUser {
     return {
       'id': id,
       'email': email,
-      'displayName': displayName,
+      'name': name,
       'role': role.name,
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       'lastLoginAt': lastLoginAt?.toIso8601String(),
       'photoUrl': photoUrl,
       'phoneNumber': phoneNumber,
@@ -75,11 +80,14 @@ class AppUser {
     return AppUser(
       id: json['id'] as String,
       email: json['email'] as String,
-      displayName: json['displayName'] as String,
+      name: json['name'] as String,
       role: UserRole.values.firstWhere((r) => r.name == json['role']),
       isActive: json['isActive'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      lastLoginAt: json['lastLoginAt'] != null 
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now(),
+      lastLoginAt: json['lastLoginAt'] != null
           ? DateTime.parse(json['lastLoginAt'] as String)
           : null,
       photoUrl: json['photoUrl'] as String?,

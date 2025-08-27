@@ -57,7 +57,10 @@ class KitchenOrderCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           if (_isPriorityOrder())
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red[100],
                                 borderRadius: BorderRadius.circular(8),
@@ -84,18 +87,25 @@ class KitchenOrderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Status and timing badge
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(order.status).withValues(alpha: 0.1),
+                        color: _getStatusColor(
+                          order.status,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _getStatusColor(order.status).withValues(alpha: 0.3),
+                          color: _getStatusColor(
+                            order.status,
+                          ).withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
@@ -113,9 +123,9 @@ class KitchenOrderCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Customer info
             if (order.customerName != null)
               Row(
@@ -130,7 +140,11 @@ class KitchenOrderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.restaurant_menu, size: 16, color: Colors.grey),
+                  const Icon(
+                    Icons.restaurant_menu,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Waiter: ${order.waiterName}',
@@ -138,16 +152,16 @@ class KitchenOrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Kitchen items only
             _buildKitchenItems(),
-            
+
             const SizedBox(height: 12),
-            
+
             // Order notes
-            if (order.notes != null && order.notes!.isNotEmpty) ...[ 
+            if (order.notes != null && order.notes!.isNotEmpty) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
@@ -159,11 +173,7 @@ class KitchenOrderCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.note,
-                      size: 16,
-                      color: Colors.amber[700],
-                    ),
+                    Icon(Icons.note, size: 16, color: Colors.amber[700]),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -180,13 +190,13 @@ class KitchenOrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
             ],
-            
+
             // Action buttons
-            if (showStartButton || showReadyButton) ...[ 
+            if (showStartButton || showReadyButton) ...[
               const Divider(),
               Row(
                 children: [
-                  if (showStartButton) ...[ 
+                  if (showStartButton) ...[
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: onStartPrep,
@@ -208,7 +218,7 @@ class KitchenOrderCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                  
+
                   if (showReadyButton) ...[
                     Expanded(
                       child: ElevatedButton.icon(
@@ -241,8 +251,11 @@ class KitchenOrderCard extends StatelessWidget {
   }
 
   Widget _buildKitchenItems() {
-    final kitchenItems = order.items.where((item) => 
-        item.product.preparationArea == PreparationArea.kitchen).toList();
+    final kitchenItems = order.items
+        .where(
+          (item) => item.product.preparationArea == PreparationArea.kitchen,
+        )
+        .toList();
 
     if (kitchenItems.isEmpty) {
       return Container(
@@ -253,10 +266,7 @@ class KitchenOrderCard extends StatelessWidget {
         ),
         child: const Text(
           'No kitchen items',
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
         ),
       );
     }
@@ -272,80 +282,85 @@ class KitchenOrderCard extends StatelessWidget {
         children: [
           Text(
             '${kitchenItems.length} Kitchen Item${kitchenItems.length != 1 ? 's' : ''}',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
           ),
           const SizedBox(height: 8),
-          ...kitchenItems.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Quantity badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${item.quantity}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+          ...kitchenItems.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Quantity badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${item.quantity}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                ),
-                
-                const SizedBox(width: 12),
-                
-                // Item details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.product.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (item.product.description != null)
+
+                  const SizedBox(width: 12),
+
+                  // Item details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          item.product.description!,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
+                          item.product.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
                           ),
                         ),
-                      if (item.notes != null && item.notes!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[100],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'Note: ${item.notes}',
+                        if (item.product.description != null)
+                          Text(
+                            item.product.description!,
                             style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.orange[800],
-                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[600],
+                              fontSize: 12,
                             ),
                           ),
-                        ),
+                        if (item.notes != null && item.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Note: ${item.notes}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.orange[800],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -355,14 +370,14 @@ class KitchenOrderCard extends StatelessWidget {
     if (showPrepTime && order.prepStartedAt != null) {
       final prepTime = DateTime.now().difference(order.prepStartedAt!);
       final minutes = prepTime.inMinutes;
-      
+
       Color color = Colors.green;
       if (minutes > 30) {
         color = Colors.red;
       } else if (minutes > 20) {
         color = Colors.orange;
       }
-      
+
       return Text(
         'Prep: ${minutes}m',
         style: TextStyle(
@@ -372,18 +387,18 @@ class KitchenOrderCard extends StatelessWidget {
         ),
       );
     }
-    
+
     if (showWaitingTime && order.readyAt != null) {
       final waitTime = DateTime.now().difference(order.readyAt!);
       final minutes = waitTime.inMinutes;
-      
+
       Color color = Colors.blue;
       if (minutes > 10) {
         color = Colors.red;
       } else if (minutes > 5) {
         color = Colors.orange;
       }
-      
+
       return Text(
         'Ready: ${minutes}m ago',
         style: TextStyle(
@@ -393,26 +408,23 @@ class KitchenOrderCard extends StatelessWidget {
         ),
       );
     }
-    
+
     // Default: show order age
     final orderAge = DateTime.now().difference(order.createdAt);
     final minutes = orderAge.inMinutes;
-    
+
     return Text(
       '${minutes}m ago',
-      style: TextStyle(
-        fontSize: 12,
-        color: Colors.grey[600],
-      ),
+      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
     );
   }
 
   bool _isPriorityOrder() {
     // Priority conditions
     final orderAge = DateTime.now().difference(order.createdAt);
-    return orderAge.inMinutes > 20 || 
-           (order.notes?.toLowerCase().contains('priority') ?? false) ||
-           (order.notes?.toLowerCase().contains('rush') ?? false);
+    return orderAge.inMinutes > 20 ||
+        (order.notes?.toLowerCase().contains('priority') ?? false) ||
+        (order.notes?.toLowerCase().contains('rush') ?? false);
   }
 
   Color _getStatusColor(OrderStatus status) {

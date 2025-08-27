@@ -19,19 +19,21 @@ final authStateProvider = StreamProvider<User?>((ref) {
 final currentUserProvider = FutureProvider<AppUser?>((ref) async {
   final authState = ref.watch(authStateProvider);
   final user = authState.valueOrNull;
-  
+
   if (user == null) return null;
-  
+
   // Get user data from Firestore
   final authRepository = ref.watch(authRepositoryProvider);
   return authRepository.getUserData(user.uid);
 });
 
 // Auth Controller Provider
-final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
-  final authRepository = ref.watch(authRepositoryProvider);
-  return AuthController(authRepository);
-});
+final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
+  (ref) {
+    final authRepository = ref.watch(authRepositoryProvider);
+    return AuthController(authRepository);
+  },
+);
 
 // Auth State
 class AuthState {
@@ -39,17 +41,9 @@ class AuthState {
   final String? error;
   final AppUser? user;
 
-  const AuthState({
-    this.isLoading = false,
-    this.error,
-    this.user,
-  });
+  const AuthState({this.isLoading = false, this.error, this.user});
 
-  AuthState copyWith({
-    bool? isLoading,
-    String? error,
-    AppUser? user,
-  }) {
+  AuthState copyWith({bool? isLoading, String? error, AppUser? user}) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
@@ -67,29 +61,32 @@ class AuthController extends StateNotifier<AuthState> {
   // Sign in with email and password
   Future<void> signInWithEmailPassword(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
-      final user = await _authRepository.signInWithEmailPassword(email, password);
+      final user = await _authRepository.signInWithEmailPassword(
+        email,
+        password,
+      );
       if (user != null && !user.isActive) {
         state = state.copyWith(
-          isLoading: false, 
-          error: 'Your account has been deactivated. Please contact an administrator.',
+          isLoading: false,
+          error:
+              'Your account has been deactivated. Please contact an administrator.',
         );
         await _authRepository.signOut();
         return;
       }
-      
+
       state = state.copyWith(isLoading: false, user: user);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-
   // Sign out
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       await _authRepository.signOut();
       state = const AuthState();
@@ -102,19 +99,19 @@ class AuthController extends StateNotifier<AuthState> {
   Future<bool> createUser({
     required String email,
     required String password,
-    required String displayName,
+    required String name,
     required UserRole role,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final user = await _authRepository.createUserAccount(
         email: email,
         password: password,
-        displayName: displayName,
+        name: name,
         role: role,
       );
-      
+
       state = state.copyWith(isLoading: false);
       return user != null;
     } catch (e) {
@@ -148,7 +145,7 @@ class AuthController extends StateNotifier<AuthState> {
   // Reset password
   Future<bool> resetPassword(String email) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       await _authRepository.resetPassword(email);
       state = state.copyWith(isLoading: false);

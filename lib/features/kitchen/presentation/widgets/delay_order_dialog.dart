@@ -3,15 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/kitchen_provider.dart';
 import '../../../../shared/models/order.dart';
 import '../../../../shared/models/product.dart';
-import '../../../../features/auth/providers/appwrite_auth_provider.dart';
+import '../../../../features/auth/providers/firebase_auth_provider.dart';
 
 class DelayOrderDialog extends ConsumerStatefulWidget {
   final Order order;
 
-  const DelayOrderDialog({
-    super.key,
-    required this.order,
-  });
+  const DelayOrderDialog({super.key, required this.order});
 
   @override
   ConsumerState<DelayOrderDialog> createState() => _DelayOrderDialogState();
@@ -75,9 +72,9 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Order summary
             Container(
               padding: const EdgeInsets.all(12),
@@ -101,28 +98,25 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Delay reason selection
             const Text(
               'Reason for delay:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            
+
             DropdownButtonFormField<String>(
-              value: _selectedReason,
+              initialValue: _selectedReason,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 hintText: 'Select a reason',
                 enabled: !_isProcessing,
               ),
               items: _delayReasons.map((reason) {
-                return DropdownMenuItem(
-                  value: reason,
-                  child: Text(reason),
-                );
+                return DropdownMenuItem(value: reason, child: Text(reason));
               }).toList(),
               onChanged: (value) {
                 setState(() {
@@ -135,13 +129,15 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
                 });
               },
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Custom reason input
-            if (_selectedReason == 'Other' || _selectedReason != null) ...[ 
+            if (_selectedReason == 'Other' || _selectedReason != null) ...[
               Text(
-                _selectedReason == 'Other' ? 'Please specify:' : 'Additional details (optional):',
+                _selectedReason == 'Other'
+                    ? 'Please specify:'
+                    : 'Additional details (optional):',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
@@ -151,21 +147,21 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  hintText: _selectedReason == 'Other' 
+                  hintText: _selectedReason == 'Other'
                       ? 'Enter reason for delay'
                       : 'Add additional details (optional)',
                 ),
               ),
               const SizedBox(height: 16),
             ],
-            
+
             // Estimated delay time
             const Text(
               'Estimated additional time:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            
+
             Row(
               children: [
                 Expanded(
@@ -177,11 +173,13 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
                         max: 60,
                         divisions: 11,
                         label: '$_estimatedMinutes minutes',
-                        onChanged: _isProcessing ? null : (value) {
-                          setState(() {
-                            _estimatedMinutes = value.round();
-                          });
-                        },
+                        onChanged: _isProcessing
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _estimatedMinutes = value.round();
+                                });
+                              },
                       ),
                       Text(
                         '$_estimatedMinutes minutes',
@@ -195,9 +193,9 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Quick time buttons
             Wrap(
               spacing: 8,
@@ -206,13 +204,15 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
                 return FilterChip(
                   label: Text('${minutes}m'),
                   selected: isSelected,
-                  onSelected: _isProcessing ? null : (selected) {
-                    if (selected) {
-                      setState(() {
-                        _estimatedMinutes = minutes;
-                      });
-                    }
-                  },
+                  onSelected: _isProcessing
+                      ? null
+                      : (selected) {
+                          if (selected) {
+                            setState(() {
+                              _estimatedMinutes = minutes;
+                            });
+                          }
+                        },
                 );
               }).toList(),
             ),
@@ -254,7 +254,7 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
   }
 
   Future<void> _submitDelay() async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
     setState(() {
@@ -262,19 +262,17 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
     });
 
     // Prepare the delay reason
-    final reason = _selectedReason == 'Other' 
+    final reason = _selectedReason == 'Other'
         ? _reasonController.text.trim()
-        : _selectedReason! + 
-          (_reasonController.text.trim().isNotEmpty 
-              ? ' - ${_reasonController.text.trim()}' 
-              : '');
+        : _selectedReason! +
+              (_reasonController.text.trim().isNotEmpty
+                  ? ' - ${_reasonController.text.trim()}'
+                  : '');
 
     try {
-      final success = await ref.read(orderStatusProvider.notifier).delayOrder(
-        widget.order.id,
-        reason,
-        _estimatedMinutes,
-      );
+      final success = await ref
+          .read(orderStatusProvider.notifier)
+          .delayOrder(widget.order.id, reason, _estimatedMinutes);
 
       if (mounted) {
         setState(() {
@@ -285,7 +283,9 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Delay reported for Order ${widget.order.orderNumber}'),
+              content: Text(
+                'Delay reported for Order ${widget.order.orderNumber}',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -305,10 +305,7 @@ class _DelayOrderDialogState extends ConsumerState<DelayOrderDialog> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }

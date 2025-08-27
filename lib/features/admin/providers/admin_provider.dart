@@ -3,21 +3,28 @@ import '../../../shared/models/app_user.dart';
 import '../../../shared/services/user_management_service.dart';
 import '../../../shared/services/analytics_service.dart';
 
-// User management providers
-final allUsersProvider = FutureProvider<List<AppUser>>((ref) async {
-  return await UserManagementService.getAllUsers();
+// User management providers - Stream for real-time updates
+final allUsersProvider = StreamProvider<List<AppUser>>((ref) {
+  return UserManagementService.getAllUsersStream();
 });
 
-final usersByRoleProvider = FutureProvider.family<List<AppUser>, String>((ref, role) async {
+final usersByRoleProvider = FutureProvider.family<List<AppUser>, String>((
+  ref,
+  role,
+) async {
   return await UserManagementService.getUsersByRole(role);
 });
 
 // Analytics providers
-final dashboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final dashboardStatsProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   return await AnalyticsService.getDashboardStats();
 });
 
-final salesAnalyticsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final salesAnalyticsProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   return await AnalyticsService.getSalesAnalytics();
 });
 
@@ -26,14 +33,17 @@ final systemStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
 });
 
 // Recent activities provider
-final recentActivitiesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final recentActivitiesProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
   return await AnalyticsService.getRecentActivities();
 });
 
 // User management state
-final userManagementProvider = StateNotifierProvider<UserManagementNotifier, UserManagementState>((ref) {
-  return UserManagementNotifier();
-});
+final userManagementProvider =
+    StateNotifierProvider<UserManagementNotifier, UserManagementState>((ref) {
+      return UserManagementNotifier();
+    });
 
 class UserManagementState {
   final bool isLoading;
@@ -64,10 +74,10 @@ class UserManagementNotifier extends StateNotifier<UserManagementState> {
 
   Future<bool> createUser(AppUser user, String password) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final success = await UserManagementService.createUser(user, password);
-      
+
       if (success) {
         state = state.copyWith(
           isLoading: false,
@@ -82,20 +92,17 @@ class UserManagementNotifier extends StateNotifier<UserManagementState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }
 
   Future<bool> updateUser(AppUser user) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final success = await UserManagementService.updateUser(user);
-      
+
       if (success) {
         state = state.copyWith(
           isLoading: false,
@@ -110,20 +117,17 @@ class UserManagementNotifier extends StateNotifier<UserManagementState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }
 
   Future<bool> deleteUser(String userId) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final success = await UserManagementService.deleteUser(userId);
-      
+
       if (success) {
         state = state.copyWith(
           isLoading: false,
@@ -138,20 +142,20 @@ class UserManagementNotifier extends StateNotifier<UserManagementState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }
 
   Future<bool> toggleUserStatus(String userId, bool isActive) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
-      final success = await UserManagementService.toggleUserStatus(userId, isActive);
-      
+      final success = await UserManagementService.toggleUserStatus(
+        userId,
+        isActive,
+      );
+
       if (success) {
         state = state.copyWith(
           isLoading: false,
@@ -166,20 +170,20 @@ class UserManagementNotifier extends StateNotifier<UserManagementState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }
 
   Future<bool> resetPassword(String userId, String newPassword) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
-      final success = await UserManagementService.resetPassword(userId, newPassword);
-      
+      final success = await UserManagementService.resetPassword(
+        userId,
+        newPassword,
+      );
+
       if (success) {
         state = state.copyWith(
           isLoading: false,
@@ -194,10 +198,7 @@ class UserManagementNotifier extends StateNotifier<UserManagementState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }

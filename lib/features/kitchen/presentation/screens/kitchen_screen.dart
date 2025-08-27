@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/kitchen_provider.dart';
 import '../../../../shared/models/order.dart';
-import '../../../../shared/utils/currency_formatter.dart';
-import '../../../../features/auth/providers/appwrite_auth_provider.dart';
+import '../../../../features/auth/providers/firebase_auth_provider.dart';
 import '../widgets/kitchen_order_card.dart';
 import '../widgets/delay_order_dialog.dart';
 
@@ -32,8 +31,8 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(appwriteCurrentUserProvider);
-    
+    final currentUser = ref.watch(firebaseCurrentUserProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kitchen Display System'),
@@ -70,21 +69,27 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
 
   Widget _buildNewOrdersTab() {
     final ordersAsync = ref.watch(kitchenOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(kitchenOrdersProvider);
       },
       child: ordersAsync.when(
         data: (orders) {
-          final newOrders = orders.where((order) => order.status == OrderStatus.approved).toList();
-          
+          final newOrders = orders
+              .where((order) => order.status == OrderStatus.approved)
+              .toList();
+
           if (newOrders.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 64,
+                    color: Colors.green,
+                  ),
                   SizedBox(height: 16),
                   Text('No new orders'),
                   Text('All orders are being prepared'),
@@ -92,7 +97,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: newOrders.length,
@@ -108,14 +113,15 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(kitchenOrdersProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(kitchenOrdersProvider)),
       ),
     );
   }
 
   Widget _buildInPrepTab() {
     final ordersAsync = ref.watch(inPrepOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(inPrepOrdersProvider);
@@ -135,7 +141,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
@@ -152,14 +158,15 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(inPrepOrdersProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(inPrepOrdersProvider)),
       ),
     );
   }
 
   Widget _buildReadyTab() {
     final ordersAsync = ref.watch(readyOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(readyOrdersProvider);
@@ -179,7 +186,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
@@ -194,14 +201,15 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(readyOrdersProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(readyOrdersProvider)),
       ),
     );
   }
 
   Widget _buildStatisticsTab() {
     final statsAsync = ref.watch(kitchenStatsProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(kitchenStatsProvider);
@@ -219,7 +227,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // Current Queue Status
               Row(
                 children: [
@@ -242,9 +250,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -266,18 +274,18 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Performance Metrics
               Text(
                 'Performance Metrics',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              
+
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -323,9 +331,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Quick Tips
               Container(
                 padding: const EdgeInsets.all(16),
@@ -351,10 +359,18 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text('• Start with orders that have been waiting longest'),
-                    const Text('• Group similar dishes to optimize cooking time'),
-                    const Text('• Mark orders ready as soon as they\'re finished'),
-                    const Text('• Use delay function if prep time will exceed 30 minutes'),
+                    const Text(
+                      '• Start with orders that have been waiting longest',
+                    ),
+                    const Text(
+                      '• Group similar dishes to optimize cooking time',
+                    ),
+                    const Text(
+                      '• Mark orders ready as soon as they\'re finished',
+                    ),
+                    const Text(
+                      '• Use delay function if prep time will exceed 30 minutes',
+                    ),
                   ],
                 ),
               ),
@@ -362,12 +378,18 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(kitchenStatsProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(kitchenStatsProvider)),
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -397,10 +419,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -415,10 +434,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text('Error: $error'),
-          ElevatedButton(
-            onPressed: onRetry,
-            child: const Text('Retry'),
-          ),
+          ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );
@@ -426,7 +442,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
 
   Widget? _buildQuickActions(user) {
     if (user == null) return null;
-    
+
     return FloatingActionButton(
       onPressed: () => _refreshAllData(),
       child: const Icon(Icons.refresh),
@@ -434,10 +450,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   }
 
   Future<void> _startPreparation(Order order) async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
-    final success = await ref.read(orderStatusProvider.notifier)
+    final success = await ref
+        .read(orderStatusProvider.notifier)
         .startPreparation(order.id, currentUser.id);
 
     if (mounted) {
@@ -462,10 +479,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   }
 
   Future<void> _markOrderReady(Order order) async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
-    final success = await ref.read(orderStatusProvider.notifier)
+    final success = await ref
+        .read(orderStatusProvider.notifier)
         .markOrderReady(order.id, currentUser.id);
 
     if (mounted) {

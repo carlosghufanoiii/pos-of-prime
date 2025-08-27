@@ -1,49 +1,63 @@
+import 'package:prime_pos/shared/utils/logger.dart';
 import '../models/app_user.dart';
 import '../models/user_role.dart';
 import '../models/product.dart';
 import '../models/order.dart';
 
 /// Service to initialize and check database connectivity
-/// This provides real database-backed data via Appwrite
+/// This provides real database-backed data via Firebase
 class DatabaseInitService {
   static bool _isInitialized = false;
   static Map<String, dynamic> _databaseStatus = {};
-  
+
   /// Initialize database connection and verify data
   static Future<bool> initialize() async {
     if (_isInitialized) return true;
-    
+
     try {
-      print('🔄 Initializing database connection...');
-      
+      Logger.info(
+        'Initializing database connection...',
+        tag: 'DatabaseInitService',
+      );
+
       // Simulate database connection check
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Check if database is accessible (you can implement actual DB check here)
       final status = await checkDatabaseStatus();
-      
+
       if (status['connected'] == true) {
         _isInitialized = true;
-        print('✅ Database initialized successfully');
-        print('📊 Database status: $status');
+        Logger.info(
+          'Database initialized successfully',
+          tag: 'DatabaseInitService',
+        );
+        Logger.debug('Database status: $status', tag: 'DatabaseInitService');
         return true;
       } else {
-        print('❌ Database initialization failed: ${status['error']}');
+        Logger.error(
+          'Database initialization failed: ${status['error']}',
+          tag: 'DatabaseInitService',
+        );
         return false;
       }
     } catch (e) {
-      print('❌ Database initialization error: $e');
+      Logger.error(
+        'Database initialization error',
+        error: e,
+        tag: 'DatabaseInitService',
+      );
       return false;
     }
   }
-  
+
   /// Check database status and table counts
   static Future<Map<String, dynamic>> checkDatabaseStatus() async {
     try {
       // In a real implementation, this would check actual database
       // For now, we'll simulate the check
       await Future.delayed(const Duration(milliseconds: 200));
-      
+
       _databaseStatus = {
         'connected': true,
         'host': '127.0.0.1:3306',
@@ -57,7 +71,7 @@ class DatabaseInitService {
         },
         'lastCheck': DateTime.now().toIso8601String(),
       };
-      
+
       return _databaseStatus;
     } catch (e) {
       return {
@@ -67,85 +81,90 @@ class DatabaseInitService {
       };
     }
   }
-  
+
   /// Get sample users from database (simulated)
   static Future<List<AppUser>> getSampleUsers() async {
     if (!_isInitialized) {
       await initialize();
     }
-    
+
     // Simulate database query delay
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     // Return sample users that match the seeded database
     return [
       AppUser(
         id: 'admin_001',
         employeeId: 'ADM001',
-        displayName: 'System Administrator',
+        name: 'System Administrator',
         email: 'admin@primepos.com',
         role: UserRole.admin,
         isActive: true,
         phoneNumber: '+63-917-1234567',
         address: '123 Admin St, Manila',
         createdAt: DateTime.now().subtract(const Duration(days: 30)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 25)),
       ),
       AppUser(
         id: 'waiter_001',
         employeeId: 'WTR001',
-        displayName: 'Maria Santos',
+        name: 'Maria Santos',
         email: 'maria.santos@primepos.com',
         role: UserRole.waiter,
         isActive: true,
         phoneNumber: '+63-917-2345678',
         address: '456 Waiter Ave, Quezon City',
         createdAt: DateTime.now().subtract(const Duration(days: 25)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 20)),
       ),
       AppUser(
         id: 'cashier_001',
         employeeId: 'CSH001',
-        displayName: 'Pedro Garcia',
+        name: 'Pedro Garcia',
         email: 'pedro.garcia@primepos.com',
         role: UserRole.cashier,
         isActive: true,
         phoneNumber: '+63-917-5678901',
         address: '654 Cash Lane, Taguig',
         createdAt: DateTime.now().subtract(const Duration(days: 20)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 15)),
       ),
       AppUser(
         id: 'kitchen_001',
         employeeId: 'KIT001',
-        displayName: 'Chef Miguel Reyes',
+        name: 'Chef Miguel Reyes',
         email: 'miguel.reyes@primepos.com',
         role: UserRole.kitchen,
         isActive: true,
         phoneNumber: '+63-917-7890123',
         address: '147 Kitchen Ave, Ortigas',
         createdAt: DateTime.now().subtract(const Duration(days: 15)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 10)),
       ),
       AppUser(
         id: 'bartender_001',
         employeeId: 'BAR001',
-        displayName: 'Mixologist Alex Torres',
+        name: 'Mixologist Alex Torres',
         email: 'alex.torres@primepos.com',
         role: UserRole.bartender,
         isActive: true,
         phoneNumber: '+63-917-0123456',
         address: '741 Bar St, Bonifacio',
         createdAt: DateTime.now().subtract(const Duration(days: 10)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 5)),
       ),
     ];
   }
-  
+
   /// Get sample products from database (simulated)
   static Future<List<Product>> getSampleProducts() async {
     if (!_isInitialized) {
       await initialize();
     }
-    
+
     // Simulate database query delay
     await Future.delayed(const Duration(milliseconds: 400));
-    
+
     // Return sample products that match the seeded database
     return [
       // Main Courses
@@ -175,16 +194,12 @@ class DatabaseInitService {
         cost: 200.00,
         preparationArea: PreparationArea.kitchen,
         modifiers: [
-          ProductModifier(
-            id: 'mod_001',
-            name: 'Extra Spicy',
-            price: 20.00,
-          ),
+          ProductModifier(id: 'mod_001', name: 'Extra Spicy', price: 20.00),
         ],
         createdAt: DateTime.now().subtract(const Duration(days: 25)),
         updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
       ),
-      
+
       // Beverages
       Product(
         id: 'prod_011',
@@ -233,21 +248,21 @@ class DatabaseInitService {
       ),
     ];
   }
-  
+
   /// Get sample orders from database (simulated)
   static Future<List<Order>> getSampleOrders() async {
     if (!_isInitialized) {
       await initialize();
     }
-    
+
     // Simulate database query delay
     await Future.delayed(const Duration(milliseconds: 350));
-    
+
     final products = await getSampleProducts();
     final adobo = products.firstWhere((p) => p.id == 'prod_001');
     final beer = products.firstWhere((p) => p.id == 'prod_011');
     final sisig = products.firstWhere((p) => p.id == 'prod_002');
-    
+
     return [
       // Completed order
       Order(
@@ -289,7 +304,7 @@ class DatabaseInitService {
         readyAt: DateTime.now().subtract(const Duration(minutes: 70)),
         servedAt: DateTime.now().subtract(const Duration(minutes: 60)),
       ),
-      
+
       // Pending order
       Order(
         id: 'order_004',
@@ -317,33 +332,43 @@ class DatabaseInitService {
       ),
     ];
   }
-  
+
   /// Test database connectivity
   static Future<bool> testConnection() async {
     try {
-      print('🔍 Testing database connection...');
-      
+      Logger.info('Testing database connection...', tag: 'DatabaseInitService');
+
       final status = await checkDatabaseStatus();
-      
+
       if (status['connected'] == true) {
-        print('✅ Database connection test successful');
+        Logger.info(
+          'Database connection test successful',
+          tag: 'DatabaseInitService',
+        );
         return true;
       } else {
-        print('❌ Database connection test failed: ${status['error']}');
+        Logger.error(
+          'Database connection test failed: ${status['error']}',
+          tag: 'DatabaseInitService',
+        );
         return false;
       }
     } catch (e) {
-      print('❌ Database connection test error: $e');
+      Logger.error(
+        'Database connection test error',
+        error: e,
+        tag: 'DatabaseInitService',
+      );
       return false;
     }
   }
-  
+
   /// Get current database status
   static Map<String, dynamic> get status => _databaseStatus;
-  
+
   /// Check if database is initialized
   static bool get isInitialized => _isInitialized;
-  
+
   /// Reset initialization state (for testing)
   static void reset() {
     _isInitialized = false;

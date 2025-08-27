@@ -74,12 +74,13 @@ class Order {
   }) : updatedAt = updatedAt ?? DateTime.now();
 
   bool get isAlcoholicOrder => items.any((item) => item.product.isAlcoholic);
-  bool get hasNonAlcoholicItems => items.any((item) => !item.product.isAlcoholic);
-  
-  List<OrderItem> get alcoholicItems => 
+  bool get hasNonAlcoholicItems =>
+      items.any((item) => !item.product.isAlcoholic);
+
+  List<OrderItem> get alcoholicItems =>
       items.where((item) => item.product.isAlcoholic).toList();
-  
-  List<OrderItem> get nonAlcoholicItems => 
+
+  List<OrderItem> get nonAlcoholicItems =>
       items.where((item) => !item.product.isAlcoholic).toList();
 
   Order copyWith({
@@ -182,7 +183,9 @@ class Order {
       discount: (json['discount'] as num?)?.toDouble() ?? 0,
       total: (json['total'] as num).toDouble(),
       paymentMethod: json['paymentMethod'] != null
-          ? PaymentMethod.values.firstWhere((p) => p.name == json['paymentMethod'])
+          ? PaymentMethod.values.firstWhere(
+              (p) => p.name == json['paymentMethod'],
+            )
           : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] != null
@@ -266,9 +269,11 @@ class OrderItem {
       id: json['id'] as String,
       product: Product.fromJson(json['product'] as Map<String, dynamic>),
       quantity: json['quantity'] as int,
-      selectedModifiers: (json['selectedModifiers'] as List<dynamic>?)
-          ?.map((m) => ProductModifier.fromJson(m as Map<String, dynamic>))
-          .toList() ?? [],
+      selectedModifiers:
+          (json['selectedModifiers'] as List<dynamic>?)
+              ?.map((m) => ProductModifier.fromJson(m as Map<String, dynamic>))
+              .toList() ??
+          [],
       notes: json['notes'] as String?,
       unitPrice: (json['unitPrice'] as num).toDouble(),
       totalPrice: (json['totalPrice'] as num).toDouble(),

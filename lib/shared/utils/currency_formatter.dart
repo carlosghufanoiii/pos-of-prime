@@ -27,7 +27,7 @@ class CurrencyFormatter {
         .replaceAll('₱', '')
         .replaceAll(',', '')
         .trim();
-    
+
     return double.tryParse(cleanString) ?? 0.0;
   }
 

@@ -8,12 +8,16 @@ final waiterReadyOrdersProvider = FutureProvider<List<Order>>((ref) async {
 });
 
 // Ready orders for specific waiter
-final waiterSpecificReadyOrdersProvider = FutureProvider.family<List<Order>, String>((ref, waiterId) async {
-  return WaiterService.getReadyOrdersForWaiter(waiterId);
-});
+final waiterSpecificReadyOrdersProvider =
+    FutureProvider.family<List<Order>, String>((ref, waiterId) async {
+      return WaiterService.getReadyOrdersForWaiter(waiterId);
+    });
 
 // Order details provider
-final orderDetailsProvider = FutureProvider.family<Order?, String>((ref, orderId) async {
+final orderDetailsProvider = FutureProvider.family<Order?, String>((
+  ref,
+  orderId,
+) async {
   return WaiterService.getOrderDetails(orderId);
 });
 
@@ -51,12 +55,9 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
 
     try {
       final success = await WaiterService.markOrderServed(orderId, waiterId);
-      
+
       if (success) {
-        state = state.copyWith(
-          isProcessing: false,
-          lastServedOrderId: orderId,
-        );
+        state = state.copyWith(isProcessing: false, lastServedOrderId: orderId);
         return true;
       } else {
         state = state.copyWith(
@@ -66,10 +67,7 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isProcessing: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }
@@ -84,7 +82,9 @@ class ServiceNotifier extends StateNotifier<ServiceState> {
 }
 
 // Service provider
-final serviceProvider = StateNotifierProvider<ServiceNotifier, ServiceState>((ref) {
+final serviceProvider = StateNotifierProvider<ServiceNotifier, ServiceState>((
+  ref,
+) {
   return ServiceNotifier();
 });
 

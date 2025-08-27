@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "142359706639",
+    "project_id": "prime-pos-system",
+    "storage_bucket": "prime-pos-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:142359706639:android:6df5a0bbc9ebc6c7ccf77a",
+        "android_client_info": {
+          "package_name": "com.primepos.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "142359706639-p9u2u57n64uivq552pgbu1qa609qkhpc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmpjZklbqcfHKWYY9-MZ2Nd7TB0LovT04"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "142359706639-p9u2u57n64uivq552pgbu1qa609qkhpc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

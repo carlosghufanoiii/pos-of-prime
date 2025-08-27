@@ -8,10 +8,7 @@ import '../../providers/admin_provider.dart';
 class EditUserDialog extends ConsumerStatefulWidget {
   final AppUser user;
 
-  const EditUserDialog({
-    super.key,
-    required this.user,
-  });
+  const EditUserDialog({super.key, required this.user});
 
   @override
   ConsumerState<EditUserDialog> createState() => _EditUserDialogState();
@@ -19,7 +16,7 @@ class EditUserDialog extends ConsumerStatefulWidget {
 
 class _EditUserDialogState extends ConsumerState<EditUserDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _displayNameController;
+  late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _employeeIdController;
   late final TextEditingController _phoneController;
@@ -33,19 +30,23 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
   void initState() {
     super.initState();
     // Initialize controllers with existing user data
-    _displayNameController = TextEditingController(text: widget.user.displayName);
+    _nameController = TextEditingController(text: widget.user.name);
     _emailController = TextEditingController(text: widget.user.email);
-    _employeeIdController = TextEditingController(text: widget.user.employeeId ?? '');
-    _phoneController = TextEditingController(text: widget.user.phoneNumber ?? '');
+    _employeeIdController = TextEditingController(
+      text: widget.user.employeeId ?? '',
+    );
+    _phoneController = TextEditingController(
+      text: widget.user.phoneNumber ?? '',
+    );
     _addressController = TextEditingController(text: widget.user.address ?? '');
-    
+
     _selectedRole = widget.user.role;
     _isActive = widget.user.isActive;
   }
 
   @override
   void dispose() {
-    _displayNameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _employeeIdController.dispose();
     _phoneController.dispose();
@@ -67,15 +68,11 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
             // Header
             Row(
               children: [
-                Icon(
-                  Icons.edit,
-                  size: 32,
-                  color: AppTheme.primaryColor,
-                ),
+                Icon(Icons.edit, size: 32, color: AppTheme.primaryColor),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Edit User: ${widget.user.displayName}',
+                    'Edit User: ${widget.user.name}',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -83,7 +80,9 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                   ),
                 ),
                 IconButton(
-                  onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close),
                 ),
               ],
@@ -110,7 +109,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                       const SizedBox(height: 16),
 
                       TextFormField(
-                        controller: _displayNameController,
+                        controller: _nameController,
                         enabled: !_isLoading,
                         decoration: const InputDecoration(
                           labelText: 'Full Name *',
@@ -140,7 +139,9 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter email address';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(value)) {
                             return 'Please enter a valid email address';
                           }
                           return null;
@@ -204,7 +205,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                       const SizedBox(height: 16),
 
                       DropdownButtonFormField<UserRole>(
-                        value: _selectedRole,
+                        initialValue: _selectedRole,
                         decoration: const InputDecoration(
                           labelText: 'Role *',
                           border: OutlineInputBorder(),
@@ -213,27 +214,33 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                         items: UserRole.values.map((role) {
                           return DropdownMenuItem(
                             value: role,
-                            child: Text(role.displayName),
+                            child: Text(role.name),
                           );
                         }).toList(),
-                        onChanged: _isLoading ? null : (value) {
-                          setState(() {
-                            _selectedRole = value!;
-                          });
-                        },
+                        onChanged: _isLoading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _selectedRole = value!;
+                                });
+                              },
                       ),
 
                       const SizedBox(height: 16),
 
                       SwitchListTile(
                         title: const Text('Active Account'),
-                        subtitle: const Text('User can log in and access the system'),
+                        subtitle: const Text(
+                          'User can log in and access the system',
+                        ),
                         value: _isActive,
-                        onChanged: _isLoading ? null : (value) {
-                          setState(() {
-                            _isActive = value;
-                          });
-                        },
+                        onChanged: _isLoading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _isActive = value;
+                                });
+                              },
                       ),
 
                       const SizedBox(height: 16),
@@ -275,7 +282,9 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   child: const Text('Cancel'),
                 ),
                 const SizedBox(width: 12),
@@ -284,7 +293,10 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -292,7 +304,9 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text('Update User'),
@@ -319,19 +333,20 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
       final updatedUser = AppUser(
         id: widget.user.id,
         email: _emailController.text.trim(),
-        displayName: _displayNameController.text.trim(),
+        name: _nameController.text.trim(),
         role: _selectedRole,
         isActive: _isActive,
         createdAt: widget.user.createdAt,
+        updatedAt: DateTime.now(),
         lastLoginAt: widget.user.lastLoginAt,
-        employeeId: _employeeIdController.text.trim().isNotEmpty 
-            ? _employeeIdController.text.trim() 
+        employeeId: _employeeIdController.text.trim().isNotEmpty
+            ? _employeeIdController.text.trim()
             : null,
-        phoneNumber: _phoneController.text.trim().isNotEmpty 
-            ? _phoneController.text.trim() 
+        phoneNumber: _phoneController.text.trim().isNotEmpty
+            ? _phoneController.text.trim()
             : null,
-        address: _addressController.text.trim().isNotEmpty 
-            ? _addressController.text.trim() 
+        address: _addressController.text.trim().isNotEmpty
+            ? _addressController.text.trim()
             : null,
       );
 
@@ -345,14 +360,14 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
         });
 
         if (success) {
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true); // Return true to indicate success
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('User ${updatedUser.displayName} updated successfully'),
+              content: Text('User ${updatedUser.name} updated successfully'),
               backgroundColor: Colors.green,
             ),
           );
-          
+
           // Refresh the users list to show updated data
           ref.invalidate(allUsersProvider);
         } else {
@@ -369,12 +384,9 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }

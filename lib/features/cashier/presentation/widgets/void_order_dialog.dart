@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/cashier_provider.dart';
 import '../../../../shared/models/order.dart';
 import '../../../../shared/utils/currency_formatter.dart';
 import '../../../../shared/services/order_service.dart';
-import '../../../../features/auth/providers/appwrite_auth_provider.dart';
+import '../../../../features/auth/providers/firebase_auth_provider.dart';
 
 class VoidOrderDialog extends ConsumerStatefulWidget {
   final Order order;
 
-  const VoidOrderDialog({
-    super.key,
-    required this.order,
-  });
+  const VoidOrderDialog({super.key, required this.order});
 
   @override
   ConsumerState<VoidOrderDialog> createState() => _VoidOrderDialogState();
@@ -75,9 +71,9 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Order summary
             Container(
               padding: const EdgeInsets.all(12),
@@ -108,16 +104,16 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Void reason selection
             const Text(
               'Reason for voiding:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            
+
             DropdownButtonFormField<String>(
               initialValue: _selectedReason,
               decoration: InputDecoration(
@@ -126,10 +122,7 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
                 enabled: !_isProcessing,
               ),
               items: _voidReasons.map((reason) {
-                return DropdownMenuItem(
-                  value: reason,
-                  child: Text(reason),
-                );
+                return DropdownMenuItem(value: reason, child: Text(reason));
               }).toList(),
               onChanged: (value) {
                 setState(() {
@@ -142,13 +135,15 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
                 });
               },
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Custom reason input (when "Other" is selected or for additional details)
             if (_selectedReason == 'Other' || _selectedReason != null) ...[
               Text(
-                _selectedReason == 'Other' ? 'Please specify:' : 'Additional details (optional):',
+                _selectedReason == 'Other'
+                    ? 'Please specify:'
+                    : 'Additional details (optional):',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
@@ -158,7 +153,7 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  hintText: _selectedReason == 'Other' 
+                  hintText: _selectedReason == 'Other'
                       ? 'Enter reason for voiding'
                       : 'Add additional details (optional)',
                 ),
@@ -202,7 +197,7 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
   }
 
   Future<void> _voidOrder() async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
     setState(() {
@@ -210,12 +205,12 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
     });
 
     // Prepare the void reason
-    final reason = _selectedReason == 'Other' 
+    final reason = _selectedReason == 'Other'
         ? _reasonController.text.trim()
-        : _selectedReason! + 
-          (_reasonController.text.trim().isNotEmpty 
-              ? ' - ${_reasonController.text.trim()}' 
-              : '');
+        : _selectedReason! +
+              (_reasonController.text.trim().isNotEmpty
+                  ? ' - ${_reasonController.text.trim()}'
+                  : '');
 
     try {
       final success = await OrderService.voidOrder(
@@ -233,7 +228,9 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Order ${widget.order.id.substring(0, 8)} has been voided'),
+              content: Text(
+                'Order ${widget.order.id.substring(0, 8)} has been voided',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -253,10 +250,7 @@ class _VoidOrderDialogState extends ConsumerState<VoidOrderDialog> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }

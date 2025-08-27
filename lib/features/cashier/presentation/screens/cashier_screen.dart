@@ -4,8 +4,8 @@ import '../../providers/cashier_provider.dart';
 import '../../../../shared/models/order.dart';
 import '../../../../shared/utils/currency_formatter.dart';
 import '../../../../shared/services/order_service.dart';
-import '../../../../shared/providers/realtime_order_provider.dart';
-import '../../../../features/auth/providers/appwrite_auth_provider.dart';
+import '../../../../shared/providers/firebase_realtime_order_provider.dart';
+import '../../../../features/auth/providers/firebase_auth_provider.dart';
 import '../widgets/order_card.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/order_details_sheet.dart';
@@ -36,8 +36,8 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(appwriteCurrentUserProvider);
-    
+    final currentUser = ref.watch(firebaseCurrentUserProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cashier Dashboard'),
@@ -71,11 +71,11 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
 
   Widget _buildPendingOrdersTab() {
     final ordersAsync = ref.watch(pendingOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         // Refresh the realtime orders provider
-        ref.invalidate(realtimeOrdersProvider);
+        ref.invalidate(firebaseOrdersStreamProvider);
       },
       child: ordersAsync.when(
         data: (orders) {
@@ -84,7 +84,11 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 64,
+                    color: Colors.green,
+                  ),
                   SizedBox(height: 16),
                   Text('No pending orders'),
                   Text('All orders have been processed'),
@@ -92,7 +96,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
@@ -129,11 +133,11 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
 
   Widget _buildApprovedOrdersTab() {
     final ordersAsync = ref.watch(approvedOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         // Refresh the realtime orders provider
-        ref.invalidate(realtimeOrdersProvider);
+        ref.invalidate(firebaseOrdersStreamProvider);
       },
       child: ordersAsync.when(
         data: (orders) {
@@ -150,7 +154,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
@@ -191,7 +195,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
           return Center(
             child: Column(
@@ -208,9 +212,9 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
             ),
           );
         }
-        
+
         final summary = snapshot.data!;
-        
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -223,7 +227,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // Order Statistics
               Row(
                 children: [
@@ -246,9 +250,9 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -270,18 +274,18 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Payment Method Breakdown
               Text(
                 'Payment Methods',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              
+
               _buildPaymentMethodCard(
                 'Cash',
                 CurrencyFormatter.format(summary['cashSales']),
@@ -302,9 +306,9 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
                 Icons.smartphone,
                 Colors.purple,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Tax Summary
               Container(
                 padding: const EdgeInsets.all(16),
@@ -339,7 +343,12 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
     );
   }
 
-  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
+  Widget _buildSummaryCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -369,17 +378,19 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPaymentMethodCard(String method, String amount, IconData icon, Color color) {
+  Widget _buildPaymentMethodCard(
+    String method,
+    String amount,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -399,10 +410,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
           ),
           Text(
             amount,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ],
       ),
@@ -411,7 +419,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
 
   Widget? _buildQuickActions(user) {
     if (user == null) return null;
-    
+
     return FloatingActionButton(
       onPressed: () => _refreshAllData(),
       child: const Icon(Icons.refresh),
@@ -428,7 +436,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
 
   void _showPaymentDialog(Order order) {
     ref.read(paymentProvider.notifier).selectOrder(order);
-    
+
     showDialog(
       context: context,
       builder: (context) => PaymentDialog(order: order),
@@ -443,15 +451,14 @@ class _CashierScreenState extends ConsumerState<CashierScreen>
   }
 
   Future<void> _approveOrder(Order order) async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
     ref.read(paymentProvider.notifier).selectOrder(order);
-    
-    final success = await ref.read(paymentProvider.notifier).approveOrder(
-      currentUser.id,
-      currentUser.displayName,
-    );
+
+    final success = await ref
+        .read(paymentProvider.notifier)
+        .approveOrder(currentUser.id, currentUser.name);
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(

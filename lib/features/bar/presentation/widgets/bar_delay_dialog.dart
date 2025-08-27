@@ -3,15 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/bar_provider.dart';
 import '../../../../shared/models/order.dart';
 import '../../../../shared/models/product.dart';
-import '../../../../features/auth/providers/appwrite_auth_provider.dart';
+import '../../../../features/auth/providers/firebase_auth_provider.dart';
 
 class BarDelayDialog extends ConsumerStatefulWidget {
   final Order order;
 
-  const BarDelayDialog({
-    super.key,
-    required this.order,
-  });
+  const BarDelayDialog({super.key, required this.order});
 
   @override
   ConsumerState<BarDelayDialog> createState() => _BarDelayDialogState();
@@ -75,9 +72,9 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Order summary
             Container(
               padding: const EdgeInsets.all(12),
@@ -103,7 +100,11 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.wine_bar, size: 14, color: Colors.amber[700]),
+                        Icon(
+                          Icons.wine_bar,
+                          size: 14,
+                          color: Colors.amber[700],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Contains alcoholic beverages',
@@ -119,28 +120,25 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Delay reason selection
             const Text(
               'Reason for delay:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            
+
             DropdownButtonFormField<String>(
-              value: _selectedReason,
+              initialValue: _selectedReason,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 hintText: 'Select a reason',
                 enabled: !_isProcessing,
               ),
               items: _delayReasons.map((reason) {
-                return DropdownMenuItem(
-                  value: reason,
-                  child: Text(reason),
-                );
+                return DropdownMenuItem(value: reason, child: Text(reason));
               }).toList(),
               onChanged: (value) {
                 setState(() {
@@ -153,13 +151,15 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                 });
               },
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Custom reason input
-            if (_selectedReason == 'Other' || _selectedReason != null) ...[ 
+            if (_selectedReason == 'Other' || _selectedReason != null) ...[
               Text(
-                _selectedReason == 'Other' ? 'Please specify:' : 'Additional details (optional):',
+                _selectedReason == 'Other'
+                    ? 'Please specify:'
+                    : 'Additional details (optional):',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
@@ -169,21 +169,21 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  hintText: _selectedReason == 'Other' 
+                  hintText: _selectedReason == 'Other'
                       ? 'Enter reason for delay'
                       : 'Add additional details (optional)',
                 ),
               ),
               const SizedBox(height: 16),
             ],
-            
+
             // Estimated delay time
             const Text(
               'Estimated additional time:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            
+
             Row(
               children: [
                 Expanded(
@@ -195,11 +195,13 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                         max: 30,
                         divisions: 14,
                         label: '$_estimatedMinutes minutes',
-                        onChanged: _isProcessing ? null : (value) {
-                          setState(() {
-                            _estimatedMinutes = value.round();
-                          });
-                        },
+                        onChanged: _isProcessing
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _estimatedMinutes = value.round();
+                                });
+                              },
                       ),
                       Text(
                         '$_estimatedMinutes minutes',
@@ -213,9 +215,9 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Quick time buttons (bar-specific shorter times)
             Wrap(
               spacing: 8,
@@ -224,13 +226,15 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
                 return FilterChip(
                   label: Text('${minutes}m'),
                   selected: isSelected,
-                  onSelected: _isProcessing ? null : (selected) {
-                    if (selected) {
-                      setState(() {
-                        _estimatedMinutes = minutes;
-                      });
-                    }
-                  },
+                  onSelected: _isProcessing
+                      ? null
+                      : (selected) {
+                          if (selected) {
+                            setState(() {
+                              _estimatedMinutes = minutes;
+                            });
+                          }
+                        },
                 );
               }).toList(),
             ),
@@ -264,9 +268,11 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
   }
 
   bool _hasAlcoholicDrinks() {
-    return widget.order.items.any((item) => 
-        item.product.preparationArea == PreparationArea.bar && 
-        item.product.isAlcoholic);
+    return widget.order.items.any(
+      (item) =>
+          item.product.preparationArea == PreparationArea.bar &&
+          item.product.isAlcoholic,
+    );
   }
 
   bool _canSubmitDelay() {
@@ -278,7 +284,7 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
   }
 
   Future<void> _submitDelay() async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
     setState(() {
@@ -286,19 +292,17 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
     });
 
     // Prepare the delay reason
-    final reason = _selectedReason == 'Other' 
+    final reason = _selectedReason == 'Other'
         ? _reasonController.text.trim()
-        : _selectedReason! + 
-          (_reasonController.text.trim().isNotEmpty 
-              ? ' - ${_reasonController.text.trim()}' 
-              : '');
+        : _selectedReason! +
+              (_reasonController.text.trim().isNotEmpty
+                  ? ' - ${_reasonController.text.trim()}'
+                  : '');
 
     try {
-      final success = await ref.read(barOrderStatusProvider.notifier).delayOrder(
-        widget.order.id,
-        reason,
-        _estimatedMinutes,
-      );
+      final success = await ref
+          .read(barOrderStatusProvider.notifier)
+          .delayOrder(widget.order.id, reason, _estimatedMinutes);
 
       if (mounted) {
         setState(() {
@@ -309,7 +313,9 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Delay reported for Bar Order ${widget.order.orderNumber}'),
+              content: Text(
+                'Delay reported for Bar Order ${widget.order.orderNumber}',
+              ),
               backgroundColor: Colors.cyan,
             ),
           );
@@ -329,10 +335,7 @@ class _BarDelayDialogState extends ConsumerState<BarDelayDialog> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }

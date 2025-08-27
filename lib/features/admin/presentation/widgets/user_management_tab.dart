@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/constants/app_theme.dart';
@@ -18,160 +19,434 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
   String _selectedRole = 'all';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  Timer? _searchTimer;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final allUsersAsync = ref.watch(allUsersProvider);
+    final userManagementState = ref.watch(userManagementProvider);
 
-    return Column(
-      children: [
-        // Search and Filter Section
-        Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.grey[50],
-          child: Column(
-            children: [
-              // Search Bar
-              TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search users by name, email, or employee ID...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
-                  border: const OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value.toLowerCase();
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Filter and Add User Row
-              Row(
+    return Container(
+      color: AppTheme.darkGrey,
+      child: Column(
+        children: [
+          // Header with user count and stats
+          allUsersAsync.when(
+            loading: () => Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  // Role Filter
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedRole,
-                      decoration: const InputDecoration(
-                        labelText: 'Filter by Role',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Roles')),
-                        DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                        DropdownMenuItem(value: 'waiter', child: Text('Waiter')),
-                        DropdownMenuItem(value: 'cashier', child: Text('Cashier')),
-                        DropdownMenuItem(value: 'kitchen', child: Text('Kitchen')),
-                        DropdownMenuItem(value: 'bartender', child: Text('Bartender')),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedRole = value!;
-                        });
-                      },
+                  Icon(Icons.people, color: AppTheme.primaryColor, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    'User Management',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  
-                  // Add User Button
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddUserDialog(context),
-                    icon: const Icon(Icons.person_add),
-                    label: const Text('Add User'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
+                  Spacer(),
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.primaryColor,
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        // Users List
-        Expanded(
-          child: allUsersAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error, size: 64, color: Colors.red[300]),
-                  const SizedBox(height: 16),
-                  Text('Error: $error'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => ref.invalidate(allUsersProvider),
-                    child: const Text('Retry'),
                   ),
                 ],
               ),
             ),
+            error: (_, __) => Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.people, color: AppTheme.primaryColor, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    'User Management',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Spacer(),
+                  Icon(Icons.error, color: Colors.red, size: 16),
+                ],
+              ),
+            ),
             data: (users) {
-              final filteredUsers = _filterUsers(users);
-              
-              if (filteredUsers.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        _searchQuery.isNotEmpty || _selectedRole != 'all'
-                            ? 'No users found matching your criteria'
-                            : 'No users found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
+              final filteredCount = _filterUsers(users).length;
+              return Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.people, color: AppTheme.primaryColor, size: 24),
+                    SizedBox(width: 8),
+                    Text(
+                      'User Management',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async {
-                  ref.invalidate(allUsersProvider);
-                },
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredUsers.length,
-                  itemBuilder: (context, index) {
-                    final user = filteredUsers[index];
-                    return _buildUserCard(user);
-                  },
+                      child: Text(
+                        '${filteredCount}/${users.length} users',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Spacer(),
+                    if (userManagementState.isLoading)
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                  ],
                 ),
               );
             },
           ),
-        ),
-      ],
+
+          // Search and Filter Section
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceGrey,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                ),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Search Bar
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightGrey,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText:
+                          'Search users by name, email, or employee ID...',
+                      hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: AppTheme.primaryColor,
+                      ),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      // Cancel previous timer
+                      _searchTimer?.cancel();
+                      
+                      // Start new timer for debounced search
+                      _searchTimer = Timer(Duration(milliseconds: 300), () {
+                        if (mounted) {
+                          setState(() {
+                            _searchQuery = value.toLowerCase();
+                          });
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Filter and Add User Row
+                Row(
+                  children: [
+                    // Role Filter
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGrey,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedRole,
+                          dropdownColor: AppTheme.lightGrey,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Filter by Role',
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'all',
+                              child: Text(
+                                'All Roles',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'admin',
+                              child: Text(
+                                'Admin',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'waiter',
+                              child: Text(
+                                'Waiter',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'cashier',
+                              child: Text(
+                                'Cashier',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'kitchen',
+                              child: Text(
+                                'Kitchen',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'bartender',
+                              child: Text(
+                                'Bartender',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedRole = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    // Add User Button
+                    ElevatedButton.icon(
+                      onPressed: userManagementState.isLoading 
+                          ? null 
+                          : () => _showAddUserDialog(context),
+                      icon: userManagementState.isLoading 
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.person_add),
+                      label: Text(userManagementState.isLoading 
+                          ? 'Creating...' 
+                          : 'Add User'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        elevation: userManagementState.isLoading ? 0 : 2,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Users List
+          Expanded(
+            child: allUsersAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              ),
+              error: (error, stack) => Center(
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceGrey,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error Loading Users',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Error: $error',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => ref.refresh(allUsersProvider),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              data: (users) {
+                final filteredUsers = _filterUsers(users);
+
+                if (filteredUsers.isEmpty) {
+                  return Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceGrey,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.people_outline,
+                            size: 64,
+                            color: AppTheme.primaryColor,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchQuery.isNotEmpty || _selectedRole != 'all'
+                                ? 'No users found matching your criteria'
+                                : 'No users found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Try adjusting your search or filter criteria',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.refresh(allUsersProvider);
+                  },
+                  child: filteredUsers.length > 20 
+                      ? ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredUsers.length,
+                          itemBuilder: (context, index) {
+                            final user = filteredUsers[index];
+                            return _buildUserCard(user);
+                          },
+                          // Optimize for large lists
+                          cacheExtent: 2000.0,
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: filteredUsers
+                              .map((user) => _buildUserCard(user))
+                              .toList(),
+                        ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -185,9 +460,9 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
       // Search filter
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
-        return user.displayName.toLowerCase().contains(query) ||
-               user.email.toLowerCase().contains(query) ||
-               (user.employeeId?.toLowerCase().contains(query) ?? false);
+        return user.name.toLowerCase().contains(query) ||
+            user.email.toLowerCase().contains(query) ||
+            (user.employeeId?.toLowerCase().contains(query) ?? false);
       }
 
       return true;
@@ -195,34 +470,66 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
   }
 
   Widget _buildUserCard(AppUser user) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceGrey,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+      ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getRoleColor(user.role),
-          child: Text(
-            user.displayName.substring(0, 1).toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: _getRoleColor(user.role), width: 2),
+          ),
+          child: CircleAvatar(
+            backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.1),
+            child: Text(
+              user.name.substring(0, 1).toUpperCase(),
+              style: TextStyle(
+                color: _getRoleColor(user.role),
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
         ),
         title: Text(
-          user.displayName,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          user.name,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            fontSize: 16,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(user.email),
+            const SizedBox(height: 4),
+            Text(
+              user.email,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: _getRoleColor(user.role).withOpacity(0.2),
+                    color: _getRoleColor(user.role).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _getRoleColor(user.role).withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     user.role.displayName,
@@ -235,11 +542,22 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
                 ),
                 const SizedBox(width: 8),
                 if (user.employeeId != null)
-                  Text(
-                    'ID: ${user.employeeId}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'ID: ${user.employeeId}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
               ],
@@ -251,75 +569,101 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
           children: [
             // Status Indicator
             Container(
-              width: 8,
-              height: 8,
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
+                color: (user.isActive ? Colors.green : Colors.red).withValues(
+                  alpha: 0.1,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: user.isActive ? Colors.green : Colors.red,
+                ),
+              ),
+              child: Icon(
+                user.isActive ? Icons.check_circle : Icons.cancel,
+                size: 16,
                 color: user.isActive ? Colors.green : Colors.red,
-                shape: BoxShape.circle,
               ),
             ),
             const SizedBox(width: 8),
-            
+
             // More Actions Button
-            PopupMenuButton<String>(
-              onSelected: (action) => _handleUserAction(action, user),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'view',
-                  child: Row(
-                    children: [
-                      Icon(Icons.visibility, size: 18),
-                      SizedBox(width: 8),
-                      Text('View Details'),
-                    ],
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: AppTheme.primaryColor),
+                color: AppTheme.surfaceGrey,
+                onSelected: (action) => _handleUserAction(action, user),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'view',
+                    child: Row(
+                      children: [
+                        Icon(Icons.visibility, size: 18, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Text(
+                          'View Details',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, size: 18),
-                      SizedBox(width: 8),
-                      Text('Edit'),
-                    ],
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 18, color: Colors.orange),
+                        const SizedBox(width: 8),
+                        Text('Edit', style: TextStyle(color: Colors.white)),
+                      ],
+                    ),
                   ),
-                ),
-                PopupMenuItem(
-                  value: user.isActive ? 'deactivate' : 'activate',
-                  child: Row(
-                    children: [
-                      Icon(
-                        user.isActive ? Icons.block : Icons.check_circle,
-                        size: 18,
-                        color: user.isActive ? Colors.orange : Colors.green,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(user.isActive ? 'Deactivate' : 'Activate'),
-                    ],
+                  PopupMenuItem(
+                    value: user.isActive ? 'deactivate' : 'activate',
+                    child: Row(
+                      children: [
+                        Icon(
+                          user.isActive ? Icons.block : Icons.check_circle,
+                          size: 18,
+                          color: user.isActive ? Colors.orange : Colors.green,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          user.isActive ? 'Deactivate' : 'Activate',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'reset_password',
-                  child: Row(
-                    children: [
-                      Icon(Icons.lock_reset, size: 18),
-                      SizedBox(width: 8),
-                      Text('Reset Password'),
-                    ],
+                  PopupMenuItem(
+                    value: 'reset_password',
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock_reset, size: 18, color: Colors.purple),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Reset Password',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, size: 18, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
+                  PopupMenuDivider(height: 1),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 18, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text('Delete', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -343,11 +687,16 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
     }
   }
 
-  void _showUserDetails(AppUser user) {
-    showDialog(
+  void _showUserDetails(AppUser user) async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) => UserDetailsDialog(user: user),
     );
+    
+    // If changes were made, refresh the user list  
+    if (result == true) {
+      ref.refresh(allUsersProvider);
+    }
   }
 
   void _showAddUserDialog(BuildContext context) {
@@ -356,7 +705,7 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
       builder: (context) => const AddUserDialog(),
     ).then((_) {
       // Refresh the user list after dialog closes
-      ref.invalidate(allUsersProvider);
+      ref.refresh(allUsersProvider);
     });
   }
 
@@ -391,8 +740,8 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
         title: Text(user.isActive ? 'Deactivate User' : 'Activate User'),
         content: Text(
           user.isActive
-              ? 'Are you sure you want to deactivate ${user.displayName}? They will no longer be able to log in.'
-              : 'Are you sure you want to activate ${user.displayName}? They will be able to log in again.',
+              ? 'Are you sure you want to deactivate ${user.name}? They will no longer be able to log in.'
+              : 'Are you sure you want to activate ${user.name}? They will be able to log in again.',
         ),
         actions: [
           TextButton(
@@ -405,9 +754,9 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
               final success = await ref
                   .read(userManagementProvider.notifier)
                   .toggleUserStatus(user.id, !user.isActive);
-              
+
               if (success) {
-                ref.invalidate(allUsersProvider);
+                ref.refresh(allUsersProvider);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -426,7 +775,7 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
       builder: (context) => AlertDialog(
         title: const Text('Reset Password'),
         content: Text(
-          'Reset password for ${user.displayName}? A temporary password will be generated.',
+          'Reset password for ${user.name}? A temporary password will be generated.',
         ),
         actions: [
           TextButton(
@@ -439,11 +788,13 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
               final success = await ref
                   .read(userManagementProvider.notifier)
                   .resetPassword(user.id, 'temp123');
-              
+
               if (success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Password reset for ${user.displayName}. Temporary password: temp123'),
+                    content: Text(
+                      'Password reset for ${user.name}. Temporary password: temp123',
+                    ),
                     duration: const Duration(seconds: 5),
                   ),
                 );
@@ -462,7 +813,7 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
       builder: (context) => AlertDialog(
         title: const Text('Delete User'),
         content: Text(
-          'Are you sure you want to permanently delete ${user.displayName}? This action cannot be undone.',
+          'Are you sure you want to permanently delete ${user.name}? This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -475,14 +826,12 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
               final success = await ref
                   .read(userManagementProvider.notifier)
                   .deleteUser(user.id);
-              
+
               if (success) {
-                ref.invalidate(allUsersProvider);
+                ref.refresh(allUsersProvider);
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

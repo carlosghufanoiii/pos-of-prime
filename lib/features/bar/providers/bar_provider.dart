@@ -1,23 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/models/product.dart';
-import '../../../shared/providers/realtime_order_provider.dart';
+import '../../../shared/providers/firebase_realtime_order_provider.dart';
 import '../../../shared/services/order_service.dart';
 
 // Bar orders providers (now using realtime)
 final barOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
       // Bar orders are drinks that need preparation
-      final barOrders = orders.where((order) => 
-        order.status == OrderStatus.approved ||
-        order.status == OrderStatus.inPrep ||
-        order.status == OrderStatus.ready
-      ).where((order) => 
-        order.items.any((item) => item.product.preparationArea == PreparationArea.bar)
-      ).toList();
+      final barOrders = orders
+          .where(
+            (order) =>
+                order.status == OrderStatus.approved ||
+                order.status == OrderStatus.inPrep ||
+                order.status == OrderStatus.ready,
+          )
+          .where(
+            (order) => order.items.any(
+              (item) => item.product.preparationArea == PreparationArea.bar,
+            ),
+          )
+          .toList();
       return AsyncValue.data(barOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -26,14 +32,19 @@ final barOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
 });
 
 final barInPrepOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
-      final inPrepOrders = orders.where((order) => 
-        order.status == OrderStatus.inPrep &&
-        order.items.any((item) => item.product.preparationArea == PreparationArea.bar)
-      ).toList();
+      final inPrepOrders = orders
+          .where(
+            (order) =>
+                order.status == OrderStatus.inPrep &&
+                order.items.any(
+                  (item) => item.product.preparationArea == PreparationArea.bar,
+                ),
+          )
+          .toList();
       return AsyncValue.data(inPrepOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -42,14 +53,19 @@ final barInPrepOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
 });
 
 final barReadyOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
-      final readyOrders = orders.where((order) => 
-        order.status == OrderStatus.ready &&
-        order.items.any((item) => item.product.preparationArea == PreparationArea.bar)
-      ).toList();
+      final readyOrders = orders
+          .where(
+            (order) =>
+                order.status == OrderStatus.ready &&
+                order.items.any(
+                  (item) => item.product.preparationArea == PreparationArea.bar,
+                ),
+          )
+          .toList();
       return AsyncValue.data(readyOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -59,29 +75,37 @@ final barReadyOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
 
 // Bar statistics provider
 final barStatsProvider = Provider<AsyncValue<Map<String, dynamic>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
-      final barOrders = orders.where((order) => 
-        order.items.any((item) => item.product.preparationArea == PreparationArea.bar)
-      ).toList();
-      
+      final barOrders = orders
+          .where(
+            (order) => order.items.any(
+              (item) => item.product.preparationArea == PreparationArea.bar,
+            ),
+          )
+          .toList();
+
       // Calculate today's date range
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day);
       final todayEnd = todayStart.add(const Duration(days: 1));
-      
+
       // Filter today's orders
-      final todaysBarOrders = barOrders.where((order) => 
-        order.createdAt.isAfter(todayStart) && order.createdAt.isBefore(todayEnd)
-      ).toList();
-      
+      final todaysBarOrders = barOrders
+          .where(
+            (order) =>
+                order.createdAt.isAfter(todayStart) &&
+                order.createdAt.isBefore(todayEnd),
+          )
+          .toList();
+
       // Calculate drink type statistics
       int alcoholicDrinks = 0;
       int nonAlcoholicDrinks = 0;
       int totalDrinks = 0;
-      
+
       for (final order in todaysBarOrders) {
         for (final item in order.items) {
           if (item.product.preparationArea == PreparationArea.bar) {
@@ -94,23 +118,31 @@ final barStatsProvider = Provider<AsyncValue<Map<String, dynamic>>>((ref) {
           }
         }
       }
-      
+
       // Calculate average prep time (simplified to 5 minutes average)
       final averagePrepTime = barOrders.isNotEmpty ? 5.0 : 0.0;
-      
+
       final stats = {
         'totalOrders': barOrders.length,
-        'pendingOrders': barOrders.where((o) => o.status == OrderStatus.approved).length,
-        'inPrepOrders': barOrders.where((o) => o.status == OrderStatus.inPrep).length,
-        'readyOrders': barOrders.where((o) => o.status == OrderStatus.ready).length,
-        'completedToday': todaysBarOrders.where((o) => o.status == OrderStatus.served).length,
+        'pendingOrders': barOrders
+            .where((o) => o.status == OrderStatus.approved)
+            .length,
+        'inPrepOrders': barOrders
+            .where((o) => o.status == OrderStatus.inPrep)
+            .length,
+        'readyOrders': barOrders
+            .where((o) => o.status == OrderStatus.ready)
+            .length,
+        'completedToday': todaysBarOrders
+            .where((o) => o.status == OrderStatus.served)
+            .length,
         'alcoholicDrinks': alcoholicDrinks,
         'nonAlcoholicDrinks': nonAlcoholicDrinks,
         'totalDrinks': totalDrinks,
         'averagePrepTime': averagePrepTime,
         'totalOrdersToday': todaysBarOrders.length,
       };
-      
+
       return AsyncValue.data(stats);
     },
     loading: () => const AsyncValue.loading(),
@@ -119,9 +151,10 @@ final barStatsProvider = Provider<AsyncValue<Map<String, dynamic>>>((ref) {
 });
 
 // Bar order status update provider
-final barOrderStatusProvider = StateNotifierProvider<BarOrderStatusNotifier, BarOrderStatusState>((ref) {
-  return BarOrderStatusNotifier();
-});
+final barOrderStatusProvider =
+    StateNotifierProvider<BarOrderStatusNotifier, BarOrderStatusState>((ref) {
+      return BarOrderStatusNotifier();
+    });
 
 class BarOrderStatusState {
   final bool isUpdating;
@@ -152,10 +185,10 @@ class BarOrderStatusNotifier extends StateNotifier<BarOrderStatusState> {
 
   Future<bool> startPreparation(String orderId, String barStaffId) async {
     state = state.copyWith(isUpdating: true, error: null);
-    
+
     try {
       final success = await OrderService.startPreparation(orderId, barStaffId);
-      
+
       if (success) {
         state = state.copyWith(
           isUpdating: false,
@@ -170,20 +203,17 @@ class BarOrderStatusNotifier extends StateNotifier<BarOrderStatusState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isUpdating: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isUpdating: false, error: e.toString());
       return false;
     }
   }
 
   Future<bool> markDrinkReady(String orderId, String barStaffId) async {
     state = state.copyWith(isUpdating: true, error: null);
-    
+
     try {
       final success = await OrderService.markOrderReady(orderId, barStaffId);
-      
+
       if (success) {
         state = state.copyWith(
           isUpdating: false,
@@ -198,20 +228,21 @@ class BarOrderStatusNotifier extends StateNotifier<BarOrderStatusState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isUpdating: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isUpdating: false, error: e.toString());
       return false;
     }
   }
 
-  // TODO: Implement delay order functionality in Appwrite
-  Future<bool> delayOrder(String orderId, String reason, int estimatedMinutes) async {
+  // TODO: Implement delay order functionality in Firebase
+  Future<bool> delayOrder(
+    String orderId,
+    String reason,
+    int estimatedMinutes,
+  ) async {
     state = state.copyWith(isUpdating: true, error: null);
-    
+
     try {
-      // For now, this functionality is not implemented in Appwrite
+      // For now, this functionality is not implemented in Firebase
       // This method exists for future implementation
       state = state.copyWith(
         isUpdating: false,
@@ -219,10 +250,7 @@ class BarOrderStatusNotifier extends StateNotifier<BarOrderStatusState> {
       );
       return false;
     } catch (e) {
-      state = state.copyWith(
-        isUpdating: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isUpdating: false, error: e.toString());
       return false;
     }
   }

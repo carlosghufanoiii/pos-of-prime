@@ -10,14 +10,14 @@ class AppTheme {
   static const Color errorColor = Color(0xFFE53935); // Error red
   static const Color successColor = Color(0xFF00E676); // Neon Green
   static const Color warningColor = Color(0xFFFFD740); // Gold
-  
+
   // Nightclub Specific Colors
   static const Color neonPink = Color(0xFFFF1744); // Neon Pink
   static const Color deepBlack = Color(0xFF000000); // Pure Black
   static const Color darkGrey = Color(0xFF121212); // Dark Background
   static const Color lightGrey = Color(0xFF424242); // Card Background
   static const Color surfaceGrey = Color(0xFF1E1E1E); // Surface
-  
+
   // Role-based Colors - Nightclub Theme
   static const Color waiterColor = Color(0xFFE91E63); // Hot Pink
   static const Color cashierColor = Color(0xFFFF4081); // Bright Pink
@@ -87,10 +87,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
         ),
-        iconTheme: const IconThemeData(
-          color: primaryColor,
-          size: 24,
-        ),
+        iconTheme: const IconThemeData(color: primaryColor, size: 24),
       ),
       // Modern elevated buttons with gradient effect
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -141,19 +138,16 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: primaryColor,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: errorColor,
-            width: 1,
-          ),
+          borderSide: const BorderSide(color: errorColor, width: 1),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         hintStyle: TextStyle(
           color: Colors.white.withValues(alpha: 0.6),
           fontSize: 16,
@@ -346,19 +340,13 @@ class AppTheme {
       end: Alignment.bottomRight,
     ),
     borderRadius: BorderRadius.circular(20),
-    border: Border.all(
-      color: primaryColor.withValues(alpha: 0.1),
-      width: 1,
-    ),
+    border: Border.all(color: primaryColor.withValues(alpha: 0.1), width: 1),
   );
 
   static BoxDecoration get neonGlowDecoration => BoxDecoration(
     color: surfaceGrey,
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-      color: primaryColor,
-      width: 2,
-    ),
+    border: Border.all(color: primaryColor, width: 2),
     boxShadow: [
       BoxShadow(
         color: primaryColor.withValues(alpha: 0.5),

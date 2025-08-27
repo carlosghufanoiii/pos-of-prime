@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/constants/app_theme.dart';
-import '../../providers/admin_provider.dart';
 import '../widgets/admin_dashboard_tab.dart';
 import '../widgets/user_management_tab.dart';
 import '../widgets/analytics_tab.dart';
 import '../widgets/system_stats_tab.dart';
 import '../widgets/export_sync_tab.dart';
+import '../widgets/menu_management_tab.dart';
 
 class AdminScreen extends ConsumerStatefulWidget {
   const AdminScreen({super.key});
@@ -22,7 +22,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -46,26 +46,12 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
           indicatorColor: Colors.white,
           indicatorWeight: 3,
           tabs: const [
-            Tab(
-              icon: Icon(Icons.dashboard),
-              text: 'Dashboard',
-            ),
-            Tab(
-              icon: Icon(Icons.people),
-              text: 'Users',
-            ),
-            Tab(
-              icon: Icon(Icons.analytics),
-              text: 'Analytics',
-            ),
-            Tab(
-              icon: Icon(Icons.monitor_heart),
-              text: 'System',
-            ),
-            Tab(
-              icon: Icon(Icons.cloud_sync),
-              text: 'Export & Sync',
-            ),
+            Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
+            Tab(icon: Icon(Icons.people), text: 'Users'),
+            Tab(icon: Icon(Icons.restaurant_menu), text: 'Menu'),
+            Tab(icon: Icon(Icons.analytics), text: 'Analytics'),
+            Tab(icon: Icon(Icons.monitor_heart), text: 'System'),
+            Tab(icon: Icon(Icons.cloud_sync), text: 'Export & Sync'),
           ],
         ),
       ),
@@ -74,6 +60,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
         children: const [
           AdminDashboardTab(),
           UserManagementTab(),
+          MenuManagementTab(),
           AnalyticsTab(),
           SystemStatsTab(),
           ExportSyncTab(),

@@ -9,7 +9,7 @@ import '../../../../shared/models/order.dart';
 import '../../../../shared/utils/currency_formatter.dart';
 import '../../../../shared/services/order_service.dart';
 import '../../../../shared/constants/app_theme.dart';
-import '../../../../features/auth/providers/appwrite_auth_provider.dart';
+import '../../../../features/auth/providers/firebase_auth_provider.dart';
 import '../widgets/product_card.dart';
 import '../widgets/category_chip.dart';
 import '../widgets/cart_summary.dart';
@@ -28,7 +28,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _tableController = TextEditingController();
   final TextEditingController _customerController = TextEditingController();
-  
+
   @override
   void initState() {
     super.initState();
@@ -48,7 +48,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
   Widget build(BuildContext context) {
     final itemCount = ref.watch(orderItemCountProvider);
     final orderTotal = ref.watch(orderTotalProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Order'),
@@ -86,7 +86,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
           _buildReadyOrdersTab(),
         ],
       ),
-      bottomNavigationBar: itemCount > 0 
+      bottomNavigationBar: itemCount > 0
           ? Container(
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -119,7 +119,8 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '$itemCount item${itemCount != 1 ? 's' : ''}'.toUpperCase(),
+                              '$itemCount item${itemCount != 1 ? 's' : ''}'
+                                  .toUpperCase(),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -144,12 +145,17 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                            colors: [
+                              AppTheme.primaryColor,
+                              AppTheme.primaryDark,
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.3,
+                              ),
                               blurRadius: 15,
                               offset: const Offset(0, 4),
                             ),
@@ -160,7 +166,10 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -203,14 +212,12 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
             },
           ),
         ),
-        
+
         // Category filters
         _buildCategoryFilters(),
-        
+
         // Products grid
-        Expanded(
-          child: _buildProductGrid(),
-        ),
+        Expanded(child: _buildProductGrid()),
       ],
     );
   }
@@ -218,7 +225,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
   Widget _buildCategoryFilters() {
     final categoriesAsync = ref.watch(productCategoriesProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
-    
+
     return categoriesAsync.when(
       data: (categories) => Container(
         height: 50,
@@ -235,15 +242,17 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                 _searchController.clear();
               },
             ),
-            ...categories.map((category) => CategoryChip(
-              label: category,
-              isSelected: selectedCategory == category,
-              onPressed: () {
-                ref.read(selectedCategoryProvider.notifier).state = category;
-                ref.read(searchQueryProvider.notifier).state = '';
-                _searchController.clear();
-              },
-            )),
+            ...categories.map(
+              (category) => CategoryChip(
+                label: category,
+                isSelected: selectedCategory == category,
+                onPressed: () {
+                  ref.read(selectedCategoryProvider.notifier).state = category;
+                  ref.read(searchQueryProvider.notifier).state = '';
+                  _searchController.clear();
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -254,15 +263,13 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
 
   Widget _buildProductGrid() {
     final productsAsync = ref.watch(filteredProductsProvider);
-    
+
     return productsAsync.when(
       data: (products) {
         if (products.isEmpty) {
-          return const Center(
-            child: Text('No products found'),
-          );
+          return const Center(child: Text('No products found'));
         }
-        
+
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -274,23 +281,29 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
           itemCount: products.length,
           itemBuilder: (context, index) {
             final product = products[index];
+            final orderState = ref.watch(orderProvider);
+            final quantityInCart = orderState.items
+                .where((item) => item.product.id == product.id)
+                .fold(0, (sum, item) => sum + item.quantity);
+                
             return ProductCard(
               product: product,
+              quantityInCart: quantityInCart,
               onAddToCart: () => _addProductToCart(product),
+              onIncreaseQuantity: () => _addProductToCart(product),
+              onDecreaseQuantity: () => _decreaseProductQuantity(product),
             );
           },
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Text('Error: $error'),
-      ),
+      error: (error, stack) => Center(child: Text('Error: $error')),
     );
   }
 
   Widget _buildCartTab() {
     final orderState = ref.watch(orderProvider);
-    
+
     if (orderState.items.isEmpty) {
       return const Center(
         child: Column(
@@ -304,12 +317,12 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
         ),
       );
     }
-    
+
     return Column(
       children: [
         // Order details form
         _buildOrderDetailsForm(),
-        
+
         // Cart items
         Expanded(
           child: ListView.builder(
@@ -320,7 +333,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
             },
           ),
         ),
-        
+
         // Cart summary
         CartSummary(orderState: orderState),
       ],
@@ -380,9 +393,9 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Table Number Field
               TextField(
                 controller: _tableController,
@@ -420,12 +433,14 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                   fillColor: AppTheme.deepBlack.withValues(alpha: 0.3),
                 ),
                 onChanged: (value) {
-                  ref.read(orderProvider.notifier).setTableNumber(value.isEmpty ? null : value);
+                  ref
+                      .read(orderProvider.notifier)
+                      .setTableNumber(value.isEmpty ? null : value);
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Customer Name Field
               TextField(
                 controller: _customerController,
@@ -463,7 +478,9 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                   fillColor: AppTheme.deepBlack.withValues(alpha: 0.3),
                 ),
                 onChanged: (value) {
-                  ref.read(orderProvider.notifier).setCustomerName(value.isEmpty ? null : value);
+                  ref
+                      .read(orderProvider.notifier)
+                      .setCustomerName(value.isEmpty ? null : value);
                 },
               ),
             ],
@@ -525,7 +542,10 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                     if (item.product.isAlcoholic)
                       Container(
                         margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -551,7 +571,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                   ],
                 ),
               ),
-            
+
               // Quantity controls and total
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -566,7 +586,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Quantity controls
                   Container(
                     decoration: BoxDecoration(
@@ -581,12 +601,16 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                         IconButton(
                           onPressed: () {
                             if (item.quantity > 1) {
-                              ref.read(orderProvider.notifier).updateItemQuantity(
-                                item.id,
-                                item.quantity - 1,
-                              );
+                              ref
+                                  .read(orderProvider.notifier)
+                                  .updateItemQuantity(
+                                    item.id,
+                                    item.quantity - 1,
+                                  );
                             } else {
-                              ref.read(orderProvider.notifier).removeItem(item.id);
+                              ref
+                                  .read(orderProvider.notifier)
+                                  .removeItem(item.id);
                             }
                           },
                           icon: Icon(
@@ -595,7 +619,10 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
                           child: Text(
                             '${item.quantity}',
                             style: const TextStyle(
@@ -607,10 +634,9 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                         ),
                         IconButton(
                           onPressed: () {
-                            ref.read(orderProvider.notifier).updateItemQuantity(
-                              item.id,
-                              item.quantity + 1,
-                            );
+                            ref
+                                .read(orderProvider.notifier)
+                                .updateItemQuantity(item.id, item.quantity + 1);
                           },
                           icon: Icon(
                             Icons.add_circle_outline,
@@ -631,7 +657,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
 
   void _addProductToCart(Product product) {
     ref.read(orderProvider.notifier).addItem(product);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${product.name} added to cart'),
@@ -640,12 +666,34 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
     );
   }
 
+  void _decreaseProductQuantity(Product product) {
+    final orderState = ref.read(orderProvider);
+    final existingItem = orderState.items.firstWhere(
+      (item) => item.product.id == product.id,
+    );
+    
+    if (existingItem.quantity > 1) {
+      ref.read(orderProvider.notifier).updateItemQuantity(
+        existingItem.id, 
+        existingItem.quantity - 1,
+      );
+    } else {
+      ref.read(orderProvider.notifier).removeItem(existingItem.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.name} removed from cart'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
   void _showOrderConfirmation() {
     final orderState = ref.read(orderProvider);
-    final currentUser = ref.read(appwriteCurrentUserProvider);
-    
+    final currentUser = ref.read(firebaseCurrentUserProvider);
+
     if (orderState.items.isEmpty) return;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -656,29 +704,50 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
             // Store context and navigator for safe async usage
             final navigator = Navigator.of(context);
             final scaffoldMessenger = ScaffoldMessenger.of(context);
-            
+
             try {
               // Create the order object
-              final order = ref.read(orderProvider.notifier).createOrder(
-                currentUser.id,
-                currentUser.displayName,
-              );
-              
+              final order = ref
+                  .read(orderProvider.notifier)
+                  .createOrder(currentUser.id, currentUser.name);
+
               // Save the order to the shared repository
               final success = await OrderService.createOrder(order);
-              
+
               if (success) {
                 // Clear the cart after successful order creation
                 ref.read(orderProvider.notifier).clearOrder();
-                
+
                 if (mounted) {
                   navigator.pop(); // Close the bottom sheet
                   navigator.pop(); // Go back to dashboard
-                  
+
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
-                      content: Text('Order ${order.orderNumber} sent for approval!'),
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Order ${order.orderNumber} Submitted!',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  'Sent to kitchen/bar for preparation',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                       backgroundColor: Colors.green,
+                      duration: Duration(seconds: 4),
                     ),
                   );
                 }
@@ -688,7 +757,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
             } catch (e) {
               if (mounted) {
                 navigator.pop(); // Close the bottom sheet
-                
+
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text('Failed to create order: $e'),
@@ -704,23 +773,28 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
   }
 
   Widget _buildReadyOrdersTab() {
-    final currentUser = ref.watch(appwriteCurrentUserProvider);
+    final currentUser = ref.watch(firebaseCurrentUserProvider);
     final readyOrdersAsync = ref.watch(waiterReadyOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () => ref.refresh(waiterReadyOrdersProvider.future),
       child: readyOrdersAsync.when(
         data: (orders) {
           // Filter orders for current waiter or show all if needed
-          final waiterOrders = orders.where((order) => 
-              order.waiterId == currentUser?.id).toList();
-          
+          final waiterOrders = orders
+              .where((order) => order.waiterId == currentUser?.id)
+              .toList();
+
           if (waiterOrders.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.room_service_outlined, size: 64, color: Colors.grey),
+                  Icon(
+                    Icons.room_service_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
                   SizedBox(height: 16),
                   Text('No orders ready for pickup'),
                   Text('Ready orders will appear here'),
@@ -728,7 +802,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: waiterOrders.length,
@@ -760,7 +834,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
   Widget _buildReadyOrderCard(Order order) {
     final isProcessing = ref.watch(isServingProvider);
     final prepSummary = WaiterService.getOrderPreparationSummary(order);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
@@ -785,10 +859,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                       ),
                       Text(
                         'Table: ${order.tableNumber ?? 'No Table'}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       if (order.customerName != null)
                         Text(
@@ -802,7 +873,10 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(16),
@@ -818,16 +892,19 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Preparation summary
             Row(
               children: [
                 if (prepSummary['hasKitchenItems'])
                   Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.orange[100],
                       borderRadius: BorderRadius.circular(12),
@@ -835,7 +912,11 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.restaurant, size: 16, color: Colors.orange),
+                        const Icon(
+                          Icons.restaurant,
+                          size: 16,
+                          color: Colors.orange,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Kitchen: ${prepSummary['kitchenItemsCount']}',
@@ -851,7 +932,10 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                 if (prepSummary['hasBarItems'])
                   Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue[100],
                       borderRadius: BorderRadius.circular(12),
@@ -859,7 +943,11 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.local_bar, size: 16, color: Colors.blue),
+                        const Icon(
+                          Icons.local_bar,
+                          size: 16,
+                          color: Colors.blue,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Bar: ${prepSummary['barItemsCount']}',
@@ -874,42 +962,38 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
                   ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Order total
             Text(
               'Total: ${CurrencyFormatter.format(order.total)}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            
+
             if (order.readyAt != null)
               Text(
                 'Ready since: ${_formatTime(order.readyAt!)}',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Action button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: isProcessing ? null : () => _markOrderServed(order),
-                icon: isProcessing 
+                icon: isProcessing
                     ? const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check_circle),
-                label: Text(isProcessing ? 'Marking as Served...' : 'Mark as Served'),
+                label: Text(
+                  isProcessing ? 'Marking as Served...' : 'Mark as Served',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -926,7 +1010,7 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {
@@ -937,20 +1021,19 @@ class _WaiterOrderScreenState extends ConsumerState<WaiterOrderScreen>
   }
 
   void _markOrderServed(Order order) async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
-    
+
     try {
-      final success = await ref.read(serviceProvider.notifier).markOrderServed(
-        order.id,
-        currentUser.id,
-      );
-      
+      final success = await ref
+          .read(serviceProvider.notifier)
+          .markOrderServed(order.id, currentUser.id);
+
       if (success) {
         if (mounted) {
           // Refresh the ready orders list
           ref.invalidate(waiterReadyOrdersProvider);
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Order ${order.orderNumber} marked as served!'),

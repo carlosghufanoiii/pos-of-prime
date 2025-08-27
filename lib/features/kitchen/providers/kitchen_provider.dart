@@ -1,20 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/order.dart';
-import '../../../shared/providers/realtime_order_provider.dart';
+import '../../../shared/providers/firebase_realtime_order_provider.dart';
 import '../../../shared/services/order_service.dart';
 
 // Kitchen orders providers (now using realtime)
 final kitchenOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
       // Kitchen orders are approved orders that need preparation
-      final kitchenOrders = orders.where((order) => 
-        order.status == OrderStatus.approved ||
-        order.status == OrderStatus.inPrep ||
-        order.status == OrderStatus.ready
-      ).toList();
+      final kitchenOrders = orders
+          .where(
+            (order) =>
+                order.status == OrderStatus.approved ||
+                order.status == OrderStatus.inPrep ||
+                order.status == OrderStatus.ready,
+          )
+          .toList();
       return AsyncValue.data(kitchenOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -23,11 +26,13 @@ final kitchenOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
 });
 
 final inPrepOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
-      final inPrepOrders = orders.where((order) => order.status == OrderStatus.inPrep).toList();
+      final inPrepOrders = orders
+          .where((order) => order.status == OrderStatus.inPrep)
+          .toList();
       return AsyncValue.data(inPrepOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -36,11 +41,13 @@ final inPrepOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
 });
 
 final readyOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
-      final readyOrders = orders.where((order) => order.status == OrderStatus.ready).toList();
+      final readyOrders = orders
+          .where((order) => order.status == OrderStatus.ready)
+          .toList();
       return AsyncValue.data(readyOrders);
     },
     loading: () => const AsyncValue.loading(),
@@ -50,40 +57,55 @@ final readyOrdersProvider = Provider<AsyncValue<List<Order>>>((ref) {
 
 // Kitchen statistics provider
 final kitchenStatsProvider = Provider<AsyncValue<Map<String, dynamic>>>((ref) {
-  final ordersAsync = ref.watch(realtimeOrdersProvider);
-  
+  final ordersAsync = ref.watch(firebaseOrdersStreamProvider);
+
   return ordersAsync.when(
     data: (orders) {
-      final kitchenOrders = orders.where((order) => 
-        order.status == OrderStatus.approved ||
-        order.status == OrderStatus.inPrep ||
-        order.status == OrderStatus.ready ||
-        order.status == OrderStatus.served
-      ).toList();
-      
+      final kitchenOrders = orders
+          .where(
+            (order) =>
+                order.status == OrderStatus.approved ||
+                order.status == OrderStatus.inPrep ||
+                order.status == OrderStatus.ready ||
+                order.status == OrderStatus.served,
+          )
+          .toList();
+
       // Calculate today's date range
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day);
       final todayEnd = todayStart.add(const Duration(days: 1));
-      
+
       // Filter today's orders
-      final todaysKitchenOrders = kitchenOrders.where((order) => 
-        order.createdAt.isAfter(todayStart) && order.createdAt.isBefore(todayEnd)
-      ).toList();
-      
+      final todaysKitchenOrders = kitchenOrders
+          .where(
+            (order) =>
+                order.createdAt.isAfter(todayStart) &&
+                order.createdAt.isBefore(todayEnd),
+          )
+          .toList();
+
       // Calculate average prep time (simplified to 12 minutes average for kitchen)
       final averagePrepTime = kitchenOrders.isNotEmpty ? 12.0 : 0.0;
-      
+
       final stats = {
         'totalOrders': kitchenOrders.length,
-        'pendingOrders': kitchenOrders.where((o) => o.status == OrderStatus.approved).length,
-        'inPrepOrders': kitchenOrders.where((o) => o.status == OrderStatus.inPrep).length,
-        'readyOrders': kitchenOrders.where((o) => o.status == OrderStatus.ready).length,
-        'completedToday': todaysKitchenOrders.where((o) => o.status == OrderStatus.served).length,
+        'pendingOrders': kitchenOrders
+            .where((o) => o.status == OrderStatus.approved)
+            .length,
+        'inPrepOrders': kitchenOrders
+            .where((o) => o.status == OrderStatus.inPrep)
+            .length,
+        'readyOrders': kitchenOrders
+            .where((o) => o.status == OrderStatus.ready)
+            .length,
+        'completedToday': todaysKitchenOrders
+            .where((o) => o.status == OrderStatus.served)
+            .length,
         'averagePrepTime': averagePrepTime,
         'totalOrdersToday': todaysKitchenOrders.length,
       };
-      
+
       return AsyncValue.data(stats);
     },
     loading: () => const AsyncValue.loading(),
@@ -92,9 +114,10 @@ final kitchenStatsProvider = Provider<AsyncValue<Map<String, dynamic>>>((ref) {
 });
 
 // Order status update provider
-final orderStatusProvider = StateNotifierProvider<OrderStatusNotifier, OrderStatusState>((ref) {
-  return OrderStatusNotifier();
-});
+final orderStatusProvider =
+    StateNotifierProvider<OrderStatusNotifier, OrderStatusState>((ref) {
+      return OrderStatusNotifier();
+    });
 
 class OrderStatusState {
   final bool isUpdating;
@@ -125,10 +148,13 @@ class OrderStatusNotifier extends StateNotifier<OrderStatusState> {
 
   Future<bool> startPreparation(String orderId, String kitchenStaffId) async {
     state = state.copyWith(isUpdating: true, error: null);
-    
+
     try {
-      final success = await OrderService.startPreparation(orderId, kitchenStaffId);
-      
+      final success = await OrderService.startPreparation(
+        orderId,
+        kitchenStaffId,
+      );
+
       if (success) {
         state = state.copyWith(
           isUpdating: false,
@@ -143,20 +169,20 @@ class OrderStatusNotifier extends StateNotifier<OrderStatusState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isUpdating: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isUpdating: false, error: e.toString());
       return false;
     }
   }
 
   Future<bool> markOrderReady(String orderId, String kitchenStaffId) async {
     state = state.copyWith(isUpdating: true, error: null);
-    
+
     try {
-      final success = await OrderService.markOrderReady(orderId, kitchenStaffId);
-      
+      final success = await OrderService.markOrderReady(
+        orderId,
+        kitchenStaffId,
+      );
+
       if (success) {
         state = state.copyWith(
           isUpdating: false,
@@ -171,20 +197,21 @@ class OrderStatusNotifier extends StateNotifier<OrderStatusState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
-        isUpdating: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isUpdating: false, error: e.toString());
       return false;
     }
   }
 
-  // TODO: Implement delay order functionality in Appwrite
-  Future<bool> delayOrder(String orderId, String reason, int estimatedMinutes) async {
+  // TODO: Implement delay order functionality in Firebase
+  Future<bool> delayOrder(
+    String orderId,
+    String reason,
+    int estimatedMinutes,
+  ) async {
     state = state.copyWith(isUpdating: true, error: null);
-    
+
     try {
-      // For now, this functionality is not implemented in Appwrite
+      // For now, this functionality is not implemented in Firebase
       // This method exists for future implementation
       state = state.copyWith(
         isUpdating: false,
@@ -192,10 +219,7 @@ class OrderStatusNotifier extends StateNotifier<OrderStatusState> {
       );
       return false;
     } catch (e) {
-      state = state.copyWith(
-        isUpdating: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isUpdating: false, error: e.toString());
       return false;
     }
   }

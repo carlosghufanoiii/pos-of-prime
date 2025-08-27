@@ -3,12 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/constants/app_theme.dart';
 import '../../../../shared/models/app_user.dart';
 import '../../../../shared/models/user_role.dart';
-import '../../../auth/providers/appwrite_auth_provider.dart';
-import '../../../waiter/presentation/screens/waiter_order_screen.dart';
-import '../../../cashier/presentation/screens/cashier_screen.dart';
-import '../../../kitchen/presentation/screens/kitchen_screen.dart';
-import '../../../bar/presentation/screens/bar_screen.dart';
-import '../../../admin/presentation/screens/admin_screen.dart';
+import '../../../../shared/services/role_navigation_service.dart';
+import '../../../auth/providers/firebase_auth_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   final AppUser user;
@@ -58,10 +54,7 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
             child: IconButton(
-              icon: Icon(
-                Icons.logout_outlined,
-                color: AppTheme.primaryColor,
-              ),
+              icon: Icon(Icons.logout_outlined, color: AppTheme.primaryColor),
               onPressed: () {
                 _showLogoutDialog(context, ref);
               },
@@ -74,11 +67,7 @@ class DashboardScreen extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppTheme.deepBlack,
-              AppTheme.darkGrey,
-              AppTheme.deepBlack,
-            ],
+            colors: [AppTheme.deepBlack, AppTheme.darkGrey, AppTheme.deepBlack],
             stops: const [0.0, 0.5, 1.0],
           ),
         ),
@@ -89,7 +78,7 @@ class DashboardScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Modern Welcome Card with Glass Effect
                 Container(
                   decoration: BoxDecoration(
@@ -122,11 +111,16 @@ class DashboardScreen extends ConsumerWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
-                                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                                colors: [
+                                  AppTheme.primaryColor,
+                                  AppTheme.primaryDark,
+                                ],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   blurRadius: 20,
                                   spreadRadius: 2,
                                 ),
@@ -136,7 +130,7 @@ class DashboardScreen extends ConsumerWidget {
                               radius: 32,
                               backgroundColor: AppTheme.deepBlack,
                               child: Text(
-                                user.displayName.substring(0, 1).toUpperCase(),
+                                user.name.substring(0, 1).toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w900,
@@ -161,7 +155,7 @@ class DashboardScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  user.displayName,
+                                  user.name,
                                   style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w700,
@@ -171,17 +165,26 @@ class DashboardScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppTheme.primaryColor.withValues(alpha: 0.2),
-                                        AppTheme.primaryDark.withValues(alpha: 0.2),
+                                        AppTheme.primaryColor.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        AppTheme.primaryDark.withValues(
+                                          alpha: 0.2,
+                                        ),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.3,
+                                      ),
                                     ),
                                   ),
                                   child: Text(
@@ -200,7 +203,9 @@ class DashboardScreen extends ConsumerWidget {
                                     'Last access: ${_formatDateTime(user.lastLoginAt!)}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.white.withValues(alpha: 0.6),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.6,
+                                      ),
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -214,7 +219,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Modern Section Header
                 Row(
                   children: [
@@ -241,14 +246,14 @@ class DashboardScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 Expanded(
                   child: GridView.count(
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                     childAspectRatio: 1.1,
-                    children: _buildQuickActions(context, user.role),
+                    children: _buildRoleBasedActions(context, user.role),
                   ),
                 ),
               ],
@@ -259,64 +264,24 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildQuickActions(BuildContext context, UserRole role) {
-    List<Widget> actions = [];
+  List<Widget> _buildRoleBasedActions(BuildContext context, UserRole role) {
+    // Get navigation options from the role navigation service
+    final navigationOptions = RoleNavigationService.getNavigationOptionsForRole(
+      role,
+    );
 
-    if (role.canCreateOrders) {
-      actions.add(_buildActionCard(
-        'Create Order',
-        Icons.add_shopping_cart,
-        AppTheme.waiterColor,
-        () => _navigateToFeature(context, 'waiter'),
-      ));
-    }
-
-    if (role.canApproveOrders) {
-      actions.add(_buildActionCard(
-        'Cashier',
-        Icons.point_of_sale,
-        AppTheme.cashierColor,
-        () => _navigateToFeature(context, 'cashier'),
-      ));
-    }
-
-    if (role.canViewKitchenQueue) {
-      actions.add(_buildActionCard(
-        'Kitchen Display',
-        Icons.restaurant,
-        AppTheme.kitchenColor,
-        () => _navigateToFeature(context, 'kitchen'),
-      ));
-    }
-
-    if (role.canViewBarQueue) {
-      actions.add(_buildActionCard(
-        'Bar Display',
-        Icons.local_bar,
-        AppTheme.barColor,
-        () => _navigateToFeature(context, 'bar'),
-      ));
-    }
-
-    if (role.canManageUsers) {
-      actions.add(_buildActionCard(
-        'Admin Panel',
-        Icons.admin_panel_settings,
-        AppTheme.adminColor,
-        () => _navigateToFeature(context, 'admin'),
-      ));
-    }
-
-    if (role.canViewReports) {
-      actions.add(_buildActionCard(
-        'Reports',
-        Icons.bar_chart,
-        AppTheme.primaryColor,
-        () => _navigateToFeature(context, 'reports'),
-      ));
-    }
-
-    return actions;
+    return navigationOptions.map((option) {
+      return _buildActionCard(
+        option.title,
+        option.icon,
+        option.color,
+        () => RoleNavigationService.navigateToFeature(
+          context,
+          option.route,
+          role,
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildActionCard(
@@ -328,10 +293,7 @@ class DashboardScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.2),
@@ -370,9 +332,7 @@ class DashboardScreen extends ConsumerWidget {
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: color.withValues(alpha: 0.3),
-                        ),
+                        border: Border.all(color: color.withValues(alpha: 0.3)),
                         boxShadow: [
                           BoxShadow(
                             color: color.withValues(alpha: 0.3),
@@ -381,11 +341,7 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      child: Icon(
-                        icon,
-                        size: 32,
-                        color: color,
-                      ),
+                      child: Icon(icon, size: 32, color: color),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -408,56 +364,8 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  void _navigateToFeature(BuildContext context, String feature) {
-    switch (feature) {
-      case 'waiter':
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const WaiterOrderScreen(),
-          ),
-        );
-        break;
-      case 'cashier':
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const CashierScreen(),
-          ),
-        );
-        break;
-      case 'kitchen':
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const KitchenScreen(),
-          ),
-        );
-        break;
-      case 'bar':
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const BarScreen(),
-          ),
-        );
-        break;
-      case 'admin':
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const AdminScreen(),
-          ),
-        );
-        break;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$feature module coming soon!'),
-            backgroundColor: AppTheme.secondaryColor,
-          ),
-        );
-    }
   }
 
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
@@ -515,7 +423,7 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     Text(
                       'EXIT PRIME',
                       style: TextStyle(
@@ -536,7 +444,7 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     Row(
                       children: [
                         // Cancel Button
@@ -546,7 +454,9 @@ class DashboardScreen extends ConsumerWidget {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                             ),
                             child: TextButton(
@@ -569,19 +479,24 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        
+
                         // Logout Button
                         Expanded(
                           child: Container(
                             height: 48,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [AppTheme.errorColor, AppTheme.errorColor.withValues(alpha: 0.8)],
+                                colors: [
+                                  AppTheme.errorColor,
+                                  AppTheme.errorColor.withValues(alpha: 0.8),
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.errorColor.withValues(alpha: 0.3),
+                                  color: AppTheme.errorColor.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   blurRadius: 15,
                                   offset: const Offset(0, 4),
                                 ),
@@ -590,7 +505,11 @@ class DashboardScreen extends ConsumerWidget {
                             child: ElevatedButton(
                               onPressed: () async {
                                 Navigator.of(context).pop();
-                                await ref.read(appwriteAuthControllerProvider.notifier).signOut();
+                                await ref
+                                    .read(
+                                      firebaseAuthControllerProvider.notifier,
+                                    )
+                                    .signOut();
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,

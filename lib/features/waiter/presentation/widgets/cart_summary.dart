@@ -6,10 +6,7 @@ import '../../../../shared/constants/app_theme.dart';
 class CartSummary extends StatelessWidget {
   final OrderState orderState;
 
-  const CartSummary({
-    super.key,
-    required this.orderState,
-  });
+  const CartSummary({super.key, required this.orderState});
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +62,9 @@ class CartSummary extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Subtotal
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -90,9 +87,9 @@ class CartSummary extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Tax (VAT)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -115,9 +112,9 @@ class CartSummary extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Modern Divider
               Container(
                 height: 1,
@@ -131,9 +128,9 @@ class CartSummary extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Total with Neon Effect
               Container(
                 padding: const EdgeInsets.all(16),

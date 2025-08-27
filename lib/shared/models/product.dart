@@ -45,7 +45,7 @@ class Product {
   });
 
   bool get isInStock => stockQuantity > 0;
-  
+
   double get profitMargin => cost != null ? ((price - cost!) / price) * 100 : 0;
 
   Product copyWith({
@@ -121,9 +121,11 @@ class Product {
       stockQuantity: json['stockQuantity'] as int? ?? 0,
       unit: json['unit'] as String? ?? 'pcs',
       cost: (json['cost'] as num?)?.toDouble(),
-      modifiers: (json['modifiers'] as List<dynamic>?)
-          ?.map((m) => ProductModifier.fromJson(m as Map<String, dynamic>))
-          .toList() ?? [],
+      modifiers:
+          (json['modifiers'] as List<dynamic>?)
+              ?.map((m) => ProductModifier.fromJson(m as Map<String, dynamic>))
+              .toList() ??
+          [],
       preparationArea: PreparationArea.values.firstWhere(
         (area) => area.name == json['preparationArea'],
         orElse: () => PreparationArea.kitchen,
@@ -148,12 +150,7 @@ class ProductModifier {
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'price': price,
-      'isRequired': isRequired,
-    };
+    return {'id': id, 'name': name, 'price': price, 'isRequired': isRequired};
   }
 
   factory ProductModifier.fromJson(Map<String, dynamic> json) {

@@ -1,10 +1,10 @@
 import '../models/app_user.dart';
-import '../repositories/appwrite_user_repository.dart';
+import '../repositories/firebase_user_repository.dart';
 
 /// User management service for admin operations
 /// Handles user creation, updates, deletion, and role management
 class UserManagementService {
-  static final AppwriteUserRepository _repository = AppwriteUserRepository();
+  static final FirebaseUserRepository _repository = FirebaseUserRepository();
 
   /// Get all users
   static Future<List<AppUser>> getAllUsers() async {
@@ -13,6 +13,11 @@ class UserManagementService {
     } catch (e) {
       throw Exception('Failed to get users: $e');
     }
+  }
+
+  /// Get all users as stream for real-time updates
+  static Stream<List<AppUser>> getAllUsersStream() {
+    return _repository.getUsersStream();
   }
 
   /// Get users by role
@@ -27,7 +32,7 @@ class UserManagementService {
   /// Create a new user
   static Future<bool> createUser(AppUser user, String password) async {
     try {
-      return await _repository.createUser(user, password);
+      return await _repository.createUserWithResult(user, password);
     } catch (e) {
       throw Exception('Failed to create user: $e');
     }
@@ -36,7 +41,7 @@ class UserManagementService {
   /// Update user information
   static Future<bool> updateUser(AppUser user) async {
     try {
-      return await _repository.updateUser(user);
+      return await _repository.updateUserWithResult(user);
     } catch (e) {
       throw Exception('Failed to update user: $e');
     }
@@ -45,7 +50,7 @@ class UserManagementService {
   /// Delete a user
   static Future<bool> deleteUser(String userId) async {
     try {
-      return await _repository.deleteUser(userId);
+      return await _repository.deleteUserWithResult(userId);
     } catch (e) {
       throw Exception('Failed to delete user: $e');
     }

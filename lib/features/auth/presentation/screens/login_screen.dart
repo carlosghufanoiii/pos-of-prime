@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prime_pos/shared/utils/logger.dart';
 import '../../../../shared/constants/app_theme.dart';
-import '../../providers/appwrite_auth_provider.dart';
+import '../../../../shared/constants/app_constants.dart';
+import '../../providers/secure_auth_role_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,17 +31,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    await ref.read(appwriteAuthControllerProvider.notifier)
-        .signInWithEmailPassword(email, password);
+    try {
+      Logger.info('Attempting login for: $email', tag: 'LoginScreen');
+      
+      // Add timeout to prevent hanging
+      await ref
+          .read(secureAuthRoleProvider.notifier)
+          .signInWithEmailPassword(email, password)
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw Exception(
+                'Login request timed out. Please check your connection and try again.',
+              );
+            },
+          );
+    } catch (e) {
+      // Error handling is done in the auth state listener
+      Logger.error('Login attempt failed', error: e, tag: 'LoginScreen');
+    }
   }
 
+  Future<void> _handleGoogleLogin() async {
+    try {
+      Logger.info('Attempting Google login', tag: 'LoginScreen');
+      
+      await ref
+          .read(secureAuthRoleProvider.notifier)
+          .signInWithGoogle()
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw Exception(
+                'Google login timed out. Please try again.',
+              );
+            },
+          );
+    } catch (e) {
+      Logger.error('Google login attempt failed', error: e, tag: 'LoginScreen');
+    }
+  }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.errorColor,
-      ),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),
     );
   }
 
@@ -47,7 +82,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (value == null || value.isEmpty) {
       return 'Email is required';
     }
-    if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
+    if (!RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(value)) {
       return 'Please enter a valid email';
     }
     return null;
@@ -66,26 +103,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     // Listen to auth state changes
-    ref.listen<AuthState>(appwriteAuthControllerProvider, (previous, next) {
-      if (next.error != null) {
+    ref.listen<AuthRoleData>(secureAuthRoleProvider, (previous, next) {
+      if (next.hasError) {
         _showErrorSnackBar(next.error!);
-        ref.read(appwriteAuthControllerProvider.notifier).clearError();
+        ref.read(secureAuthRoleProvider.notifier).clearError();
       }
     });
 
-    final authState = ref.watch(appwriteAuthControllerProvider);
-    
+    final authData = ref.watch(secureAuthRoleProvider);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppTheme.deepBlack,
-              AppTheme.darkGrey,
-              AppTheme.deepBlack,
-            ],
+            colors: [AppTheme.deepBlack, AppTheme.darkGrey, AppTheme.deepBlack],
             stops: const [0.0, 0.5, 1.0],
           ),
         ),
@@ -96,37 +129,63 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Modern Logo with Glow Effect
+                  // Prime POS Logo with Modern Design
                   Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFE75480), // Prime Pink
+                          Color(0xFFFF9540), // Prime Orange
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          color: const Color(0xFFE75480).withValues(alpha: 0.4),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
                         BoxShadow(
-                          color: AppTheme.neonPink.withValues(alpha: 0.3),
+                          color: const Color(0xFFFF9540).withValues(alpha: 0.3),
                           blurRadius: 50,
                           spreadRadius: 10,
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.diamond_outlined,
-                      size: 80,
-                      color: Colors.white,
+                    child: Column(
+                      children: [
+                        // Diamond icon
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
+                          child: const Icon(
+                            Icons.diamond_outlined,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // POS text
+                        const Text(
+                          'POS',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Brand Text with Modern Typography
                   Text(
                     'PRIME',
@@ -169,7 +228,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 64),
-                  
+
                   // Modern Login Card with Glass Effect
                   Container(
                     decoration: BoxDecoration(
@@ -208,17 +267,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 32),
-                              
+
                               // Modern Email Field
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.3,
+                                    ),
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 10,
                                     ),
                                   ],
@@ -244,17 +307,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              
+
                               // Modern Password Field
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: 0.3,
+                                    ),
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 10,
                                     ),
                                   ],
@@ -293,28 +360,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 32),
-                              
+
                               // Modern Login Button with Gradient
                               Container(
                                 width: double.infinity,
                                 height: 56,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                                    colors: [
+                                      AppTheme.primaryColor,
+                                      AppTheme.primaryDark,
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.4,
+                                      ),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 child: ElevatedButton(
-                                  onPressed: authState.isLoading ? null : _handleEmailLogin,
+                                  onPressed: authData.isLoading
+                                      ? null
+                                      : _handleEmailLogin,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.transparent,
                                     shadowColor: Colors.transparent,
@@ -322,7 +396,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
-                                  child: authState.isLoading
+                                  child: authData.isLoading
                                       ? const SizedBox(
                                           height: 24,
                                           width: 24,
@@ -348,12 +422,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Footer
                   Text(
-                    'Premium Entertainment Solutions',
+                    AppConstants.brandTagline,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.4),

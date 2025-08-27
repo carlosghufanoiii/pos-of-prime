@@ -5,10 +5,7 @@ import '../../../../shared/utils/currency_formatter.dart';
 class OrderDetailsSheet extends StatelessWidget {
   final Order order;
 
-  const OrderDetailsSheet({
-    super.key,
-    required this.order,
-  });
+  const OrderDetailsSheet({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +31,7 @@ class OrderDetailsSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -43,9 +40,8 @@ class OrderDetailsSheet extends StatelessWidget {
                   children: [
                     Text(
                       'Order Details',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -54,9 +50,9 @@ class OrderDetailsSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const Divider(),
-              
+
               // Content
               Expanded(
                 child: SingleChildScrollView(
@@ -67,22 +63,22 @@ class OrderDetailsSheet extends StatelessWidget {
                     children: [
                       // Order information
                       _buildOrderInfo(),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Items list
                       _buildItemsList(),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Order summary
                       _buildOrderSummary(context),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Timeline
                       _buildTimeline(),
-                      
+
                       if (order.notes != null && order.notes!.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         _buildNotes(),
@@ -138,21 +134,21 @@ class OrderDetailsSheet extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           if (order.tableNumber != null) ...[
             _buildInfoRow(Icons.table_restaurant, 'Table', order.tableNumber!),
             const SizedBox(height: 8),
           ],
-          
+
           if (order.customerName != null) ...[
             _buildInfoRow(Icons.person, 'Customer', order.customerName!),
             const SizedBox(height: 8),
           ],
-          
+
           _buildInfoRow(Icons.restaurant_menu, 'Waiter', order.waiterName),
-          
+
           if (order.cashierName != null) ...[
             const SizedBox(height: 8),
             _buildInfoRow(Icons.point_of_sale, 'Cashier', order.cashierName!),
@@ -190,149 +186,148 @@ class OrderDetailsSheet extends StatelessWidget {
       children: [
         Text(
           'Order Items (${order.items.length})',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        
-        ...order.items.map((item) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Quantity badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${item.quantity}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+
+        ...order.items.map(
+          (item) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Quantity badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${item.quantity}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-              ),
-              
-              const SizedBox(width: 12),
-              
-              // Item details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.product.name,
+
+                const SizedBox(width: 12),
+
+                // Item details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.product.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          if (item.product.isAlcoholic)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Alcoholic',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        item.product.description ?? '',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Unit Price: ${CurrencyFormatter.format(item.unitPrice)}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            CurrencyFormatter.format(item.totalPrice),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
                           ),
-                        ),
-                        if (item.product.isAlcoholic)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.orange[100],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Alcoholic',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.orange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 4),
-                    
-                    Text(
-                      item.product.description ?? '',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
+                        ],
                       ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Unit Price: ${CurrencyFormatter.format(item.unitPrice)}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
+
+                      if (item.notes != null && item.notes!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber[50],
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.amber[200]!),
                           ),
-                        ),
-                        Text(
-                          CurrencyFormatter.format(item.totalPrice),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    if (item.notes != null && item.notes!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.amber[50],
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.amber[200]!),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.note,
-                              size: 14,
-                              color: Colors.amber[700],
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                item.notes!,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.amber[800],
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.note,
+                                size: 14,
+                                color: Colors.amber[700],
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  item.notes!,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.amber[800],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }
@@ -349,13 +344,10 @@ class OrderDetailsSheet extends StatelessWidget {
         children: [
           const Text(
             'Order Summary',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -363,9 +355,9 @@ class OrderDetailsSheet extends StatelessWidget {
               Text(CurrencyFormatter.format(order.subtotal)),
             ],
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -373,7 +365,7 @@ class OrderDetailsSheet extends StatelessWidget {
               Text(CurrencyFormatter.format(order.taxAmount)),
             ],
           ),
-          
+
           if (order.serviceCharge > 0) ...[
             const SizedBox(height: 8),
             Row(
@@ -384,7 +376,7 @@ class OrderDetailsSheet extends StatelessWidget {
               ],
             ),
           ],
-          
+
           if (order.discount > 0) ...[
             const SizedBox(height: 8),
             Row(
@@ -398,18 +390,15 @@ class OrderDetailsSheet extends StatelessWidget {
               ],
             ),
           ],
-          
+
           const Divider(),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Total:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               Text(
                 CurrencyFormatter.format(order.total),
@@ -421,7 +410,7 @@ class OrderDetailsSheet extends StatelessWidget {
               ),
             ],
           ),
-          
+
           if (order.paymentMethod != null) ...[
             const SizedBox(height: 12),
             Row(
@@ -446,13 +435,10 @@ class OrderDetailsSheet extends StatelessWidget {
       children: [
         const Text(
           'Timeline',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        
+
         _buildTimelineItem(
           'Order Created',
           order.createdAt,
@@ -460,7 +446,7 @@ class OrderDetailsSheet extends StatelessWidget {
           Colors.blue,
           true,
         ),
-        
+
         if (order.approvedAt != null)
           _buildTimelineItem(
             'Order Approved',
@@ -469,7 +455,7 @@ class OrderDetailsSheet extends StatelessWidget {
             Colors.green,
             true,
           ),
-        
+
         if (order.servedAt != null)
           _buildTimelineItem(
             'Order Completed',
@@ -505,9 +491,9 @@ class OrderDetailsSheet extends StatelessWidget {
               color: isCompleted ? Colors.white : Colors.grey[600],
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -521,10 +507,7 @@ class OrderDetailsSheet extends StatelessWidget {
                 ),
                 Text(
                   _formatDateTime(dateTime),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -540,13 +523,10 @@ class OrderDetailsSheet extends StatelessWidget {
       children: [
         const Text(
           'Notes',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        
+
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
@@ -555,12 +535,7 @@ class OrderDetailsSheet extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.amber[200]!),
           ),
-          child: Text(
-            order.notes!,
-            style: TextStyle(
-              color: Colors.amber[800],
-            ),
-          ),
+          child: Text(order.notes!, style: TextStyle(color: Colors.amber[800])),
         ),
       ],
     );
@@ -587,7 +562,7 @@ class OrderDetailsSheet extends StatelessWidget {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
-           '${dateTime.hour.toString().padLeft(2, '0')}:'
-           '${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

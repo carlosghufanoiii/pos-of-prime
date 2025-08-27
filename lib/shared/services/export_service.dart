@@ -9,7 +9,6 @@ import '../models/order.dart';
 import '../models/app_user.dart';
 
 class ExportService {
-
   /// Export orders to CSV file
   static Future<String> exportOrdersToCSV(List<Order> orders) async {
     try {
@@ -38,14 +37,17 @@ class ExportService {
           'Kitchen Started',
           'Kitchen Ready',
           'Served At',
-        ]
+        ],
       ];
 
       // Data rows
       for (final order in orders) {
-        final items = order.items.map((item) => 
-          '${item.quantity}x ${item.product.name} (₱${item.product.price})'
-        ).join('; ');
+        final items = order.items
+            .map(
+              (item) =>
+                  '${item.quantity}x ${item.product.name} (₱${item.product.price})',
+            )
+            .join('; ');
 
         csvData.add([
           order.orderNumber,
@@ -99,14 +101,14 @@ class ExportService {
           'Status',
           'Created Date',
           'Last Login',
-        ]
+        ],
       ];
 
       // Data rows
       for (final user in users) {
         csvData.add([
           user.employeeId ?? '',
-          user.displayName,
+          user.name,
           user.email,
           user.role.displayName,
           user.phoneNumber ?? '',
@@ -142,24 +144,43 @@ class ExportService {
 
       // Header row
       final headers = [
-        'Order Number', 'Date', 'Time', 'Customer Name', 'Table Number',
-        'Waiter', 'Status', 'Items', 'Subtotal', 'Tax', 'Total',
-        'Payment Method', 'Preparation Area', 'Kitchen Started', 'Kitchen Ready', 'Served At'
+        'Order Number',
+        'Date',
+        'Time',
+        'Customer Name',
+        'Table Number',
+        'Waiter',
+        'Status',
+        'Items',
+        'Subtotal',
+        'Tax',
+        'Total',
+        'Payment Method',
+        'Preparation Area',
+        'Kitchen Started',
+        'Kitchen Ready',
+        'Served At',
       ];
 
       for (int i = 0; i < headers.length; i++) {
-        sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0))
-          .value = TextCellValue(headers[i]);
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0))
+            .value = TextCellValue(
+          headers[i],
+        );
       }
 
       // Data rows
       for (int orderIndex = 0; orderIndex < orders.length; orderIndex++) {
         final order = orders[orderIndex];
         final rowIndex = orderIndex + 1;
-        
-        final items = order.items.map((item) => 
-          '${item.quantity}x ${item.product.name} (₱${item.product.price})'
-        ).join('; ');
+
+        final items = order.items
+            .map(
+              (item) =>
+                  '${item.quantity}x ${item.product.name} (₱${item.product.price})',
+            )
+            .join('; ');
 
         final rowData = [
           order.orderNumber,
@@ -181,8 +202,13 @@ class ExportService {
         ];
 
         for (int i = 0; i < rowData.length; i++) {
-          sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: rowIndex))
-            .value = TextCellValue(rowData[i]);
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: i, rowIndex: rowIndex),
+              )
+              .value = TextCellValue(
+            rowData[i],
+          );
         }
       }
 
@@ -218,7 +244,6 @@ class ExportService {
     }
   }
 
-
   /// Generate sales report data
   static Map<String, dynamic> generateSalesReport(List<Order> orders) {
     if (orders.isEmpty) {
@@ -233,14 +258,18 @@ class ExportService {
     }
 
     final totalOrders = orders.length;
-    final totalRevenue = orders.fold<double>(0, (sum, order) => sum + order.total);
+    final totalRevenue = orders.fold<double>(
+      0,
+      (sum, order) => sum + order.total,
+    );
     final averageOrderValue = totalRevenue / totalOrders;
 
     // Top products
     final productCounts = <String, int>{};
     for (final order in orders) {
       for (final item in order.items) {
-        productCounts[item.product.name] = (productCounts[item.product.name] ?? 0) + item.quantity;
+        productCounts[item.product.name] =
+            (productCounts[item.product.name] ?? 0) + item.quantity;
       }
     }
 
@@ -248,7 +277,7 @@ class ExportService {
     final topProducts = Map.fromEntries(
       productCounts.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value))
-        ..take(10)
+        ..take(10),
     );
 
     // Hourly breakdown
@@ -263,7 +292,8 @@ class ExportService {
     for (final order in orders) {
       if (order.paymentMethod != null) {
         final method = order.paymentMethod!.name;
-        paymentMethodBreakdown[method] = (paymentMethodBreakdown[method] ?? 0) + 1;
+        paymentMethodBreakdown[method] =
+            (paymentMethodBreakdown[method] ?? 0) + 1;
       }
     }
 
@@ -284,7 +314,10 @@ class ExportService {
   ) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
+      final timestamp = DateTime.now()
+          .toIso8601String()
+          .replaceAll(':', '-')
+          .split('.')[0];
       final fileName = 'prime_pos_backup_$timestamp.json';
       final filePath = '${directory.path}/$fileName';
 

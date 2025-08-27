@@ -57,7 +57,10 @@ class BarOrderCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           if (_hasAlcoholicDrinks())
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.amber[100],
                                 borderRadius: BorderRadius.circular(8),
@@ -65,7 +68,11 @@ class BarOrderCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.wine_bar, size: 12, color: Colors.amber[800]),
+                                  Icon(
+                                    Icons.wine_bar,
+                                    size: 12,
+                                    color: Colors.amber[800],
+                                  ),
                                   const SizedBox(width: 2),
                                   Text(
                                     'ID CHECK',
@@ -81,7 +88,10 @@ class BarOrderCard extends StatelessWidget {
                           if (_isPriorityOrder())
                             Container(
                               margin: const EdgeInsets.only(left: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red[100],
                                 borderRadius: BorderRadius.circular(8),
@@ -108,18 +118,25 @@ class BarOrderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Status and timing badge
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(order.status).withValues(alpha: 0.1),
+                        color: _getStatusColor(
+                          order.status,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _getStatusColor(order.status).withValues(alpha: 0.3),
+                          color: _getStatusColor(
+                            order.status,
+                          ).withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
@@ -137,9 +154,9 @@ class BarOrderCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Customer and waiter info
             if (order.customerName != null)
               Row(
@@ -154,7 +171,11 @@ class BarOrderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.restaurant_menu, size: 16, color: Colors.grey),
+                  const Icon(
+                    Icons.restaurant_menu,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Waiter: ${order.waiterName}',
@@ -162,16 +183,16 @@ class BarOrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Bar items only
             _buildBarItems(),
-            
+
             const SizedBox(height: 12),
-            
+
             // Order notes
-            if (order.notes != null && order.notes!.isNotEmpty) ...[ 
+            if (order.notes != null && order.notes!.isNotEmpty) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
@@ -183,11 +204,7 @@ class BarOrderCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.note,
-                      size: 16,
-                      color: Colors.amber[700],
-                    ),
+                    Icon(Icons.note, size: 16, color: Colors.amber[700]),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -204,13 +221,13 @@ class BarOrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
             ],
-            
+
             // Action buttons
-            if (showStartButton || showReadyButton) ...[ 
+            if (showStartButton || showReadyButton) ...[
               const Divider(),
               Row(
                 children: [
-                  if (showStartButton) ...[ 
+                  if (showStartButton) ...[
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: onStartPrep,
@@ -232,7 +249,7 @@ class BarOrderCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                  
+
                   if (showReadyButton) ...[
                     Expanded(
                       child: ElevatedButton.icon(
@@ -265,8 +282,9 @@ class BarOrderCard extends StatelessWidget {
   }
 
   Widget _buildBarItems() {
-    final barItems = order.items.where((item) => 
-        item.product.preparationArea == PreparationArea.bar).toList();
+    final barItems = order.items
+        .where((item) => item.product.preparationArea == PreparationArea.bar)
+        .toList();
 
     if (barItems.isEmpty) {
       return Container(
@@ -277,10 +295,7 @@ class BarOrderCard extends StatelessWidget {
         ),
         child: const Text(
           'No bar items',
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
         ),
       );
     }
@@ -310,104 +325,121 @@ class BarOrderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...barItems.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Quantity badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: item.product.isAlcoholic ? Colors.amber : Colors.cyan,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${item.quantity}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+          ...barItems.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Quantity badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: item.product.isAlcoholic
+                          ? Colors.amber
+                          : Colors.cyan,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${item.quantity}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                ),
-                
-                const SizedBox(width: 12),
-                
-                // Item details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.product.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+
+                  const SizedBox(width: 12),
+
+                  // Item details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.product.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
-                          ),
-                          if (item.product.isAlcoholic)
-                            Container(
-                              margin: const EdgeInsets.only(left: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.amber[200],
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.wine_bar, size: 10, color: Colors.amber[800]),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'Alcohol',
-                                    style: TextStyle(
-                                      fontSize: 8,
+                            if (item.product.isAlcoholic)
+                              Container(
+                                margin: const EdgeInsets.only(left: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber[200],
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.wine_bar,
+                                      size: 10,
                                       color: Colors.amber[800],
-                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Alcohol',
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        color: Colors.amber[800],
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (item.product.description != null)
+                          Text(
+                            item.product.description!,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (item.notes != null && item.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Note: ${item.notes}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.orange[800],
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
+                          ),
                         ],
-                      ),
-                      if (item.product.description != null)
-                        Text(
-                          item.product.description!,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      if (item.notes != null && item.notes!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[100],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'Note: ${item.notes}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.orange[800],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -417,14 +449,14 @@ class BarOrderCard extends StatelessWidget {
     if (showPrepTime && order.prepStartedAt != null) {
       final prepTime = DateTime.now().difference(order.prepStartedAt!);
       final minutes = prepTime.inMinutes;
-      
+
       Color color = Colors.green;
       if (minutes > 15) {
         color = Colors.red;
       } else if (minutes > 10) {
         color = Colors.orange;
       }
-      
+
       return Text(
         'Mixing: ${minutes}m',
         style: TextStyle(
@@ -434,18 +466,18 @@ class BarOrderCard extends StatelessWidget {
         ),
       );
     }
-    
+
     if (showWaitingTime && order.readyAt != null) {
       final waitTime = DateTime.now().difference(order.readyAt!);
       final minutes = waitTime.inMinutes;
-      
+
       Color color = Colors.blue;
       if (minutes > 5) {
         color = Colors.red;
       } else if (minutes > 3) {
         color = Colors.orange;
       }
-      
+
       return Text(
         'Ready: ${minutes}m ago',
         style: TextStyle(
@@ -455,32 +487,31 @@ class BarOrderCard extends StatelessWidget {
         ),
       );
     }
-    
+
     // Default: show order age
     final orderAge = DateTime.now().difference(order.createdAt);
     final minutes = orderAge.inMinutes;
-    
+
     return Text(
       '${minutes}m ago',
-      style: TextStyle(
-        fontSize: 12,
-        color: Colors.grey[600],
-      ),
+      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
     );
   }
 
   bool _hasAlcoholicDrinks() {
-    return order.items.any((item) => 
-        item.product.preparationArea == PreparationArea.bar && 
-        item.product.isAlcoholic);
+    return order.items.any(
+      (item) =>
+          item.product.preparationArea == PreparationArea.bar &&
+          item.product.isAlcoholic,
+    );
   }
 
   bool _isPriorityOrder() {
     // Priority conditions for bar
     final orderAge = DateTime.now().difference(order.createdAt);
-    return orderAge.inMinutes > 15 || 
-           (order.notes?.toLowerCase().contains('priority') ?? false) ||
-           (order.notes?.toLowerCase().contains('rush') ?? false);
+    return orderAge.inMinutes > 15 ||
+        (order.notes?.toLowerCase().contains('priority') ?? false) ||
+        (order.notes?.toLowerCase().contains('rush') ?? false);
   }
 
   Color _getStatusColor(OrderStatus status) {

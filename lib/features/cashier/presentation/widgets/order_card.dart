@@ -60,15 +60,22 @@ class OrderCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   // Status badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(order.status).withValues(alpha: 0.1),
+                      color: _getStatusColor(
+                        order.status,
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _getStatusColor(order.status).withValues(alpha: 0.3),
+                        color: _getStatusColor(
+                          order.status,
+                        ).withValues(alpha: 0.3),
                       ),
                     ),
                     child: Text(
@@ -82,9 +89,9 @@ class OrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Customer and waiter info
               Row(
                 children: [
@@ -97,7 +104,11 @@ class OrderCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                   ],
-                  const Icon(Icons.restaurant_menu, size: 16, color: Colors.grey),
+                  const Icon(
+                    Icons.restaurant_menu,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Waiter: ${order.waiterName}',
@@ -105,9 +116,9 @@ class OrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Order items summary
               Container(
                 padding: const EdgeInsets.all(12),
@@ -126,49 +137,53 @@ class OrderCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    ...order.items.take(3).map((item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: Row(
-                        children: [
-                          Text(
-                            '${item.quantity}x',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              item.product.name,
-                              style: const TextStyle(fontSize: 12),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (item.product.isAlcoholic)
-                            Container(
-                              margin: const EdgeInsets.only(left: 4),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.orange[100],
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'Alcohol',
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
+                    ...order.items
+                        .take(3)
+                        .map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '${item.quantity}x',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    item.product.name,
+                                    style: const TextStyle(fontSize: 12),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (item.product.isAlcoholic)
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange[100],
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'Alcohol',
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                        ],
-                      ),
-                    )),
+                          ),
+                        ),
                     if (order.items.length > 3)
                       Text(
                         '... and ${order.items.length - 3} more items',
@@ -181,9 +196,9 @@ class OrderCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Time and total amount
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -193,10 +208,7 @@ class OrderCard extends StatelessWidget {
                     children: [
                       Text(
                         'Ordered: ${_formatTime(order.createdAt)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       if (order.approvedAt != null)
                         Text(
@@ -208,7 +220,7 @@ class OrderCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                  
+
                   Text(
                     CurrencyFormatter.format(order.total),
                     style: TextStyle(
@@ -219,7 +231,7 @@ class OrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               // Action buttons
               if (showApproveButton || showPaymentButton) ...[
                 const SizedBox(height: 12),
@@ -248,7 +260,7 @@ class OrderCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    
+
                     if (showPaymentButton)
                       Expanded(
                         child: ElevatedButton.icon(
@@ -264,7 +276,7 @@ class OrderCard extends StatelessWidget {
                   ],
                 ),
               ],
-              
+
               // Notes
               if (order.notes != null && order.notes!.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -279,11 +291,7 @@ class OrderCard extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.note,
-                        size: 16,
-                        color: Colors.amber[700],
-                      ),
+                      Icon(Icons.note, size: 16, color: Colors.amber[700]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

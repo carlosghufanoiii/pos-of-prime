@@ -20,10 +20,12 @@ class CategoryChip extends StatelessWidget {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onPressed(),
-        selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+        selectedColor: Theme.of(
+          context,
+        ).colorScheme.primary.withValues(alpha: 0.12),
         checkmarkColor: Theme.of(context).colorScheme.primary,
         labelStyle: TextStyle(
-          color: isSelected 
+          color: isSelected
               ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

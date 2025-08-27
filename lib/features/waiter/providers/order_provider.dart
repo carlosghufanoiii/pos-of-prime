@@ -41,17 +41,20 @@ class OrderNotifier extends StateNotifier<OrderState> {
   OrderNotifier() : super(const OrderState());
 
   void addItem(Product product, {int quantity = 1}) {
-    final existingItemIndex = state.items.indexWhere((item) => item.product.id == product.id);
-    
+    final existingItemIndex = state.items.indexWhere(
+      (item) => item.product.id == product.id,
+    );
+
     List<OrderItem> updatedItems;
     if (existingItemIndex >= 0) {
       // Update existing item quantity
       updatedItems = List.from(state.items);
       final newQuantity = updatedItems[existingItemIndex].quantity + quantity;
-      updatedItems[existingItemIndex] = updatedItems[existingItemIndex].copyWith(
-        quantity: newQuantity,
-        totalPrice: product.price * newQuantity,
-      );
+      updatedItems[existingItemIndex] = updatedItems[existingItemIndex]
+          .copyWith(
+            quantity: newQuantity,
+            totalPrice: product.price * newQuantity,
+          );
     } else {
       // Add new item
       final newItem = OrderItem(
@@ -63,12 +66,14 @@ class OrderNotifier extends StateNotifier<OrderState> {
       );
       updatedItems = [...state.items, newItem];
     }
-    
+
     state = state.copyWith(items: updatedItems);
   }
 
   void removeItem(String itemId) {
-    final updatedItems = state.items.where((item) => item.id != itemId).toList();
+    final updatedItems = state.items
+        .where((item) => item.id != itemId)
+        .toList();
     state = state.copyWith(items: updatedItems);
   }
 
@@ -77,7 +82,7 @@ class OrderNotifier extends StateNotifier<OrderState> {
       removeItem(itemId);
       return;
     }
-    
+
     final updatedItems = state.items.map((item) {
       if (item.id == itemId) {
         return item.copyWith(
@@ -87,7 +92,7 @@ class OrderNotifier extends StateNotifier<OrderState> {
       }
       return item;
     }).toList();
-    
+
     state = state.copyWith(items: updatedItems);
   }
 
@@ -109,8 +114,9 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
   Order createOrder(String waiterId, String waiterName) {
     final timestamp = DateTime.now();
-    final orderNumber = 'ORD-${timestamp.millisecondsSinceEpoch.toString().substring(8)}';
-    
+    final orderNumber =
+        'ORD-${timestamp.millisecondsSinceEpoch.toString().substring(8)}';
+
     return Order(
       id: 'order_${timestamp.millisecondsSinceEpoch}',
       orderNumber: orderNumber,

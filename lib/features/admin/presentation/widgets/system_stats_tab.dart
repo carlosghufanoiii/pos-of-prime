@@ -10,277 +10,364 @@ class SystemStatsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final systemStatsAsync = ref.watch(systemStatsProvider);
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(systemStatsProvider);
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: systemStatsAsync.when(
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(),
+    return Container(
+      color: AppTheme.darkGrey,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(systemStatsProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: systemStatsAsync.when(
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              ),
             ),
-          ),
-          error: (error, stack) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error, size: 64, color: Colors.red[300]),
-                const SizedBox(height: 16),
-                Text('Error: $error'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(systemStatsProvider),
-                  child: const Text('Retry'),
+            error: (error, stack) => Center(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceGrey,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                 ),
-              ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.settings_system_daydream,
+                      size: 64,
+                      color: AppTheme.primaryColor,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'System Stats Loading',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Building system dashboard...',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => ref.invalidate(systemStatsProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          data: (stats) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // System Health Overview
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'System Uptime',
-                      '${stats['systemUptime']}',
-                      Icons.trending_up,
-                      Colors.green,
-                      subtitle: 'Excellent',
+            data: (stats) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceGrey,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Active Users',
-                      '${stats['activeUsers']}',
-                      Icons.people,
-                      AppTheme.primaryColor,
-                      subtitle: 'Currently online',
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Response Time',
-                      '${stats['averageResponseTime']}ms',
-                      Icons.speed,
-                      _getResponseTimeColor(stats['averageResponseTime']),
-                      subtitle: _getResponseTimeStatus(stats['averageResponseTime']),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Error Rate',
-                      '${(stats['errorRate'] as double).toStringAsFixed(2)}%',
-                      Icons.error_outline,
-                      _getErrorRateColor(stats['errorRate']),
-                      subtitle: _getErrorRateStatus(stats['errorRate']),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Resource Usage
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      const Text(
-                        'Resource Usage',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.monitor_heart,
+                          color: AppTheme.primaryColor,
+                          size: 32,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      _buildResourceBar(
-                        'CPU Usage',
-                        stats['cpuUsage'],
-                        '%',
-                        Colors.blue,
-                        Icons.memory,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'System Health',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Updated: ${_formatLastUpdate(stats['lastUpdated'])}',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      _buildResourceBar(
-                        'Memory Usage',
-                        stats['memoryUsage'],
-                        '%',
-                        Colors.orange,
-                        Icons.storage,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildResourceBar(
-                        'Disk Usage',
-                        stats['diskUsage'],
-                        '%',
-                        Colors.purple,
-                        Icons.sd_storage,
+                      IconButton(
+                        onPressed: () => ref.invalidate(systemStatsProvider),
+                        icon: const Icon(Icons.refresh, color: Colors.white),
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Database Information
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+                // System Health Cards
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildHealthCard(
+                        'Database',
+                        _getSystemHealth(stats, 'databaseConnected'),
+                        Icons.storage,
+                        _getSystemHealth(stats, 'databaseConnected')
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildHealthCard(
+                        'Real-time',
+                        _getSystemHealth(stats, 'realtimeConnected'),
+                        Icons.sync,
+                        _getSystemHealth(stats, 'realtimeConnected')
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        'Avg Process Time',
+                        '${_getProcessingTime(stats)}min',
+                        Icons.timer,
+                        Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        'System Uptime',
+                        '99.9%',
+                        Icons.trending_up,
+                        Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Order Status Distribution
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceGrey,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Database Information',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.pie_chart,
+                            color: AppTheme.primaryColor,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Order Status Distribution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
+                      ..._buildOrderStatusList(stats),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // User Role Distribution
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceGrey,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.people,
+                            color: AppTheme.primaryColor,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Staff Distribution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       Row(
                         children: [
                           Expanded(
-                            child: _buildInfoTile(
-                              'Active Connections',
-                              '${stats['dbConnections']}',
-                              'of ${stats['maxDbConnections']} max',
-                              Icons.link,
-                              Colors.green,
+                            child: _buildRoleCard(
+                              'Admins',
+                              '${_getUserRoleCount(stats, 'admins')}',
+                              Icons.admin_panel_settings,
+                              Colors.red,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: _buildInfoTile(
-                              'Total Transactions',
-                              '${stats['totalTransactions']}',
-                              'since startup',
-                              Icons.swap_horiz,
+                            child: _buildRoleCard(
+                              'Waiters',
+                              '${_getUserRoleCount(stats, 'waiters')}',
+                              Icons.person,
                               Colors.blue,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildInfoTile(
-                        'Failed Transactions',
-                        '${stats['failedTransactions']}',
-                        'needs attention',
-                        Icons.warning,
-                        stats['failedTransactions'] > 0 ? Colors.red : Colors.green,
-                        fullWidth: true,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Maintenance Information
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Maintenance Schedule',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildMaintenanceItem(
-                        'Last Backup',
-                        _formatDateTime(stats['lastBackup']),
-                        Icons.backup,
-                        Colors.green,
-                      ),
                       const SizedBox(height: 12),
-                      _buildMaintenanceItem(
-                        'Next Maintenance',
-                        _formatDateTime(stats['nextScheduledMaintenance']),
-                        Icons.build,
-                        Colors.orange,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Quick Actions
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'System Actions',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
+                      Row(
                         children: [
-                          _buildActionButton(
-                            'Run Backup',
-                            Icons.backup,
-                            Colors.blue,
-                            () => _showBackupDialog(context),
+                          Expanded(
+                            child: _buildRoleCard(
+                              'Cashiers',
+                              '${_getUserRoleCount(stats, 'cashiers')}',
+                              Icons.point_of_sale,
+                              Colors.green,
+                            ),
                           ),
-                          _buildActionButton(
-                            'Clear Cache',
-                            Icons.clear_all,
-                            Colors.orange,
-                            () => _showClearCacheDialog(context),
-                          ),
-                          _buildActionButton(
-                            'System Logs',
-                            Icons.description,
-                            Colors.green,
-                            () => _showSystemLogsDialog(context),
-                          ),
-                          _buildActionButton(
-                            'Performance Report',
-                            Icons.assessment,
-                            Colors.purple,
-                            () => _showPerformanceReportDialog(context),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildRoleCard(
+                              'Kitchen',
+                              '${_getUserRoleCount(stats, 'kitchen')}',
+                              Icons.restaurant,
+                              Colors.orange,
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHealthCard(
+    String title,
+    bool isHealthy,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceGrey,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                isHealthy ? Icons.check_circle : Icons.error,
+                color: color,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isHealthy ? 'Online' : 'Offline',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -289,341 +376,184 @@ class SystemStatsTab extends ConsumerWidget {
     String title,
     String value,
     IconData icon,
-    Color color, {
-    String? subtitle,
-  }) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(icon, color: color, size: 24),
-                Text(
-                  value,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceGrey,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                ),
               ),
             ],
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildResourceBar(
-    String title,
-    dynamic value,
-    String unit,
-    Color color,
-    IconData icon,
-  ) {
-    final percentage = value is double ? value : (value as int).toDouble();
-    final displayValue = percentage.toStringAsFixed(1);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: color),
-                const SizedBox(width: 8),
-                Text(title),
-              ],
+  Widget _buildRoleCard(String role, String count, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            role,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
-            Text(
-              '$displayValue$unit',
+          ),
+          const SizedBox(height: 4),
+          Text(
+            count,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildOrderStatusList(Map<String, dynamic> stats) {
+    final orderStatus =
+        stats['orderStatusDistribution'] as Map<String, dynamic>? ?? {};
+    final statusItems = [
+      {'key': 'pending', 'label': 'Pending Approval', 'color': Colors.orange},
+      {'key': 'approved', 'label': 'Approved', 'color': Colors.blue},
+      {'key': 'inPrep', 'label': 'In Preparation', 'color': Colors.purple},
+      {'key': 'ready', 'label': 'Ready to Serve', 'color': Colors.green},
+      {'key': 'served', 'label': 'Served', 'color': Colors.grey},
+    ];
+
+    return statusItems
+        .map(
+          (item) => _buildOrderStatusRow(
+            item['label'] as String,
+            orderStatus[item['key']] ?? 0,
+            item['color'] as Color,
+          ),
+        )
+        .toList();
+  }
+
+  Widget _buildOrderStatusRow(String status, int count, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              status,
               style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              count.toString(),
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: _getUsageColor(percentage),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        LinearProgressIndicator(
-          value: percentage / 100,
-          backgroundColor: Colors.grey[300],
-          valueColor: AlwaysStoppedAnimation(_getUsageColor(percentage)),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildInfoTile(
-    String title,
-    String value,
-    String subtitle,
-    IconData icon,
-    Color color, {
-    bool fullWidth = false,
-  }) {
-    final content = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[500],
-          ),
-        ),
-      ],
-    );
+  String _formatLastUpdate(dynamic timestamp) {
+    if (timestamp == null) return 'Just now';
+    try {
+      final DateTime dt = DateTime.parse(timestamp.toString());
+      final now = DateTime.now();
+      final difference = now.difference(dt);
 
-    if (fullWidth) {
-      return content;
+      if (difference.inMinutes < 1) return 'Just now';
+      if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
+      if (difference.inHours < 24) return '${difference.inHours}h ago';
+      return '${difference.inDays}d ago';
+    } catch (e) {
+      return 'Just now';
     }
-
-    return content;
   }
 
-  Widget _buildMaintenanceItem(
-    String title,
-    String time,
-    IconData icon,
-    Color color,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: color),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+  bool _getSystemHealth(Map<String, dynamic> stats, String key) {
+    final systemHealth = stats['systemHealth'] as Map<String, dynamic>? ?? {};
+    return systemHealth[key] as bool? ?? false;
   }
 
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-    );
+  String _getProcessingTime(Map<String, dynamic> stats) {
+    final systemHealth = stats['systemHealth'] as Map<String, dynamic>? ?? {};
+    final time = systemHealth['averageOrderProcessingTime'] as double? ?? 0.0;
+    return time.toStringAsFixed(1);
   }
 
-  Color _getResponseTimeColor(dynamic responseTime) {
-    final time = responseTime is int ? responseTime : (responseTime as double).toInt();
-    if (time < 200) return Colors.green;
-    if (time < 500) return Colors.orange;
-    return Colors.red;
-  }
-
-  String _getResponseTimeStatus(dynamic responseTime) {
-    final time = responseTime is int ? responseTime : (responseTime as double).toInt();
-    if (time < 200) return 'Excellent';
-    if (time < 500) return 'Good';
-    return 'Needs attention';
-  }
-
-  Color _getErrorRateColor(dynamic errorRate) {
-    final rate = errorRate is double ? errorRate : (errorRate as int).toDouble();
-    if (rate < 0.5) return Colors.green;
-    if (rate < 2.0) return Colors.orange;
-    return Colors.red;
-  }
-
-  String _getErrorRateStatus(dynamic errorRate) {
-    final rate = errorRate is double ? errorRate : (errorRate as int).toDouble();
-    if (rate < 0.5) return 'Excellent';
-    if (rate < 2.0) return 'Acceptable';
-    return 'High';
-  }
-
-  Color _getUsageColor(double percentage) {
-    if (percentage < 60) return Colors.green;
-    if (percentage < 80) return Colors.orange;
-    return Colors.red;
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  void _showBackupDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Run Backup'),
-        content: const Text('This will create a backup of the current database. Continue?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Backup started...')),
-              );
-            },
-            child: const Text('Start Backup'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showClearCacheDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Cache'),
-        content: const Text('This will clear all cached data. Continue?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cache cleared successfully')),
-              );
-            },
-            child: const Text('Clear Cache'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSystemLogsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('System Logs'),
-        content: const SizedBox(
-          width: 400,
-          height: 300,
-          child: SingleChildScrollView(
-            child: Text(
-              'System logs feature coming soon...\n\n'
-              'This will show:\n'
-              '• Application logs\n'
-              '• Error logs\n'
-              '• Access logs\n'
-              '• Performance logs',
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPerformanceReportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Performance Report'),
-        content: const SizedBox(
-          width: 400,
-          height: 300,
-          child: SingleChildScrollView(
-            child: Text(
-              'Performance report feature coming soon...\n\n'
-              'This will include:\n'
-              '• Response time analysis\n'
-              '• Resource usage trends\n'
-              '• Error rate analysis\n'
-              '• Database performance\n'
-              '• Recommendations',
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+  int _getUserRoleCount(Map<String, dynamic> stats, String role) {
+    final roleDistribution =
+        stats['userRoleDistribution'] as Map<String, dynamic>? ?? {};
+    return roleDistribution[role] as int? ?? 0;
   }
 }

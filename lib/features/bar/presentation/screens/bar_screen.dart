@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/bar_provider.dart';
 import '../../../../shared/models/order.dart';
-import '../../../../features/auth/providers/appwrite_auth_provider.dart';
+import '../../../../features/auth/providers/firebase_auth_provider.dart';
 import '../widgets/bar_order_card.dart';
 import '../widgets/bar_delay_dialog.dart';
 
@@ -31,8 +31,8 @@ class _BarScreenState extends ConsumerState<BarScreen>
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(appwriteCurrentUserProvider);
-    
+    final currentUser = ref.watch(firebaseCurrentUserProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bar Display System'),
@@ -69,21 +69,27 @@ class _BarScreenState extends ConsumerState<BarScreen>
 
   Widget _buildNewDrinksTab() {
     final ordersAsync = ref.watch(barOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(barOrdersProvider);
       },
       child: ordersAsync.when(
         data: (orders) {
-          final newOrders = orders.where((order) => order.status == OrderStatus.approved).toList();
-          
+          final newOrders = orders
+              .where((order) => order.status == OrderStatus.approved)
+              .toList();
+
           if (newOrders.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 64,
+                    color: Colors.green,
+                  ),
                   SizedBox(height: 16),
                   Text('No new drink orders'),
                   Text('All orders are being prepared'),
@@ -91,7 +97,7 @@ class _BarScreenState extends ConsumerState<BarScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: newOrders.length,
@@ -107,14 +113,15 @@ class _BarScreenState extends ConsumerState<BarScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(barOrdersProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(barOrdersProvider)),
       ),
     );
   }
 
   Widget _buildInPrepTab() {
     final ordersAsync = ref.watch(barInPrepOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(barInPrepOrdersProvider);
@@ -134,7 +141,7 @@ class _BarScreenState extends ConsumerState<BarScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
@@ -151,14 +158,15 @@ class _BarScreenState extends ConsumerState<BarScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(barInPrepOrdersProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(barInPrepOrdersProvider)),
       ),
     );
   }
 
   Widget _buildReadyTab() {
     final ordersAsync = ref.watch(barReadyOrdersProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(barReadyOrdersProvider);
@@ -178,7 +186,7 @@ class _BarScreenState extends ConsumerState<BarScreen>
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
@@ -193,14 +201,15 @@ class _BarScreenState extends ConsumerState<BarScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(barReadyOrdersProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(barReadyOrdersProvider)),
       ),
     );
   }
 
   Widget _buildBarStatsTab() {
     final statsAsync = ref.watch(barStatsProvider);
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(barStatsProvider);
@@ -218,7 +227,7 @@ class _BarScreenState extends ConsumerState<BarScreen>
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // Current Queue Status
               Row(
                 children: [
@@ -241,9 +250,9 @@ class _BarScreenState extends ConsumerState<BarScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -265,18 +274,18 @@ class _BarScreenState extends ConsumerState<BarScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Drink Statistics
               Text(
                 'Drink Statistics',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -298,9 +307,9 @@ class _BarScreenState extends ConsumerState<BarScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -318,7 +327,11 @@ class _BarScreenState extends ConsumerState<BarScreen>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.local_bar, color: Colors.purple[700], size: 28),
+                        Icon(
+                          Icons.local_bar,
+                          color: Colors.purple[700],
+                          size: 28,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Total Drinks Today',
@@ -342,66 +355,69 @@ class _BarScreenState extends ConsumerState<BarScreen>
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
-              // Performance Metrics
+
+              // Performance Metrics - Enhanced UI
               Text(
                 'Performance Metrics',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Performance Metrics Cards
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildPerformanceCard(
+                      'Avg Prep Time',
+                      '${(stats['averagePrepTime'] ?? 0.0).toStringAsFixed(1)} min',
+                      Icons.timer,
+                      Colors.indigo,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildPerformanceCard(
+                      'Orders Today',
+                      '${stats['totalOrdersToday'] ?? 0}',
+                      Icons.receipt,
+                      Colors.teal,
+                    ),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 12),
-              
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Average Prep Time:',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          '${(stats['averagePrepTime'] ?? 0.0).toStringAsFixed(1)} min',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ],
+
+              // Additional Performance Metrics
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildPerformanceCard(
+                      'Peak Hour',
+                      '${stats['peakHour'] ?? 'N/A'}',
+                      Icons.trending_up,
+                      Colors.amber,
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Orders Today:',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          '${stats['totalOrdersToday'] ?? 0}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildPerformanceCard(
+                      'Efficiency Rate',
+                      '${(stats['efficiencyRate'] ?? 0.0).toStringAsFixed(0)}%',
+                      Icons.speed,
+                      Colors.green,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Bar Tips
               Container(
                 padding: const EdgeInsets.all(16),
@@ -427,10 +443,16 @@ class _BarScreenState extends ConsumerState<BarScreen>
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text('• Check alcohol ID for all alcoholic beverages'),
-                    const Text('• Prepare non-alcoholic drinks first for efficiency'),
+                    const Text(
+                      '• Check alcohol ID for all alcoholic beverages',
+                    ),
+                    const Text(
+                      '• Prepare non-alcoholic drinks first for efficiency',
+                    ),
                     const Text('• Keep ice levels stocked during peak hours'),
-                    const Text('• Serve cocktails immediately after preparation'),
+                    const Text(
+                      '• Serve cocktails immediately after preparation',
+                    ),
                   ],
                 ),
               ),
@@ -438,12 +460,18 @@ class _BarScreenState extends ConsumerState<BarScreen>
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorView(error, () => ref.refresh(barStatsProvider)),
+        error: (error, stack) =>
+            _buildErrorView(error, () => ref.refresh(barStatsProvider)),
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -473,17 +501,19 @@ class _BarScreenState extends ConsumerState<BarScreen>
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDrinkStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildDrinkStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -519,6 +549,76 @@ class _BarScreenState extends ConsumerState<BarScreen>
     );
   }
 
+  Widget _buildPerformanceCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.1),
+            color.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.1),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildErrorView(Object error, VoidCallback onRetry) {
     return Center(
       child: Column(
@@ -527,10 +627,7 @@ class _BarScreenState extends ConsumerState<BarScreen>
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text('Error: $error'),
-          ElevatedButton(
-            onPressed: onRetry,
-            child: const Text('Retry'),
-          ),
+          ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );
@@ -538,7 +635,7 @@ class _BarScreenState extends ConsumerState<BarScreen>
 
   Widget? _buildQuickActions(user) {
     if (user == null) return null;
-    
+
     return FloatingActionButton(
       onPressed: () => _refreshAllData(),
       child: const Icon(Icons.refresh),
@@ -546,17 +643,20 @@ class _BarScreenState extends ConsumerState<BarScreen>
   }
 
   Future<void> _startPreparation(Order order) async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
-    final success = await ref.read(barOrderStatusProvider.notifier)
+    final success = await ref
+        .read(barOrderStatusProvider.notifier)
         .startPreparation(order.id, currentUser.id);
 
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Started preparing drinks for Order ${order.orderNumber}'),
+            content: Text(
+              'Started preparing drinks for Order ${order.orderNumber}',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -574,10 +674,11 @@ class _BarScreenState extends ConsumerState<BarScreen>
   }
 
   Future<void> _markDrinkReady(Order order) async {
-    final currentUser = ref.read(appwriteCurrentUserProvider);
+    final currentUser = ref.read(firebaseCurrentUserProvider);
     if (currentUser == null) return;
 
-    final success = await ref.read(barOrderStatusProvider.notifier)
+    final success = await ref
+        .read(barOrderStatusProvider.notifier)
         .markDrinkReady(order.id, currentUser.id);
 
     if (mounted) {

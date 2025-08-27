@@ -1,17 +1,17 @@
 import '../models/order.dart';
-import '../repositories/appwrite_order_repository.dart';
+import '../repositories/firebase_order_repository.dart';
 
 /// Shared order service for managing orders across the application
 /// This service coordinates between different modules (waiter, cashier, kitchen, bar)
-/// Uses Appwrite database exclusively
+/// Uses Firebase database exclusively
 class OrderService {
-  static final AppwriteOrderRepository _repository = AppwriteOrderRepository();
+  static final FirebaseOrderRepository _repository = FirebaseOrderRepository();
 
   /// Create a new order and add it to the system
   /// This is typically called by waiters when they submit orders
   static Future<bool> createOrder(Order order) async {
     try {
-      return await _repository.createOrder(order);
+      return await _repository.createOrderWithResult(order);
     } catch (e) {
       throw Exception('Failed to create order: $e');
     }
@@ -45,7 +45,11 @@ class OrderService {
   }
 
   /// Approve an order (cashier function)
-  static Future<bool> approveOrder(String orderId, String cashierId, String cashierName) async {
+  static Future<bool> approveOrder(
+    String orderId,
+    String cashierId,
+    String cashierName,
+  ) async {
     try {
       return await _repository.approveOrder(orderId, cashierId, cashierName);
     } catch (e) {
@@ -75,7 +79,11 @@ class OrderService {
   }
 
   /// Void an order
-  static Future<bool> voidOrder(String orderId, String reason, String cashierId) async {
+  static Future<bool> voidOrder(
+    String orderId,
+    String reason,
+    String cashierId,
+  ) async {
     try {
       return await _repository.voidOrder(orderId, reason, cashierId);
     } catch (e) {
@@ -86,7 +94,7 @@ class OrderService {
   /// Get orders by status
   static Future<List<Order>> getOrdersByStatus(OrderStatus status) async {
     try {
-      return await _repository.getOrdersByStatus(status);
+      return await _repository.getOrdersByStatus(status.name);
     } catch (e) {
       throw Exception('Failed to get orders by status: $e');
     }
@@ -111,7 +119,10 @@ class OrderService {
   }
 
   /// Kitchen operations - Start order preparation
-  static Future<bool> startPreparation(String orderId, String kitchenStaffId) async {
+  static Future<bool> startPreparation(
+    String orderId,
+    String kitchenStaffId,
+  ) async {
     try {
       return await _repository.startPreparation(orderId, kitchenStaffId);
     } catch (e) {
@@ -120,7 +131,10 @@ class OrderService {
   }
 
   /// Kitchen operations - Mark order as ready
-  static Future<bool> markOrderReady(String orderId, String kitchenStaffId) async {
+  static Future<bool> markOrderReady(
+    String orderId,
+    String kitchenStaffId,
+  ) async {
     try {
       return await _repository.markOrderReady(orderId, kitchenStaffId);
     } catch (e) {

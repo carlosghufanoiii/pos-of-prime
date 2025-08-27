@@ -17,14 +17,12 @@ class AuthRepository {
 
   // Sign in with email and password
   Future<AppUser?> signInWithEmailPassword(
-    String email, 
+    String email,
     String password,
   ) async {
     try {
-      final UserCredential result = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential result = await _firebaseAuth
+          .signInWithEmailAndPassword(email: email, password: password);
 
       if (result.user != null) {
         // Update last login time
@@ -37,17 +35,17 @@ class AuthRepository {
     }
   }
 
-
   // Create user profile in Firestore
   Future<AppUser?> _createUserProfile(User user, UserRole role) async {
     try {
       final appUser = AppUser(
         id: user.uid,
         email: user.email ?? '',
-        displayName: user.displayName ?? user.email?.split('@').first ?? 'User',
+        name: user.displayName ?? user.email?.split('@').first ?? 'User',
         role: role,
         isActive: true,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
         photoUrl: user.photoURL,
         phoneNumber: user.phoneNumber,
@@ -84,10 +82,9 @@ class AuthRepository {
   // Update last login time
   Future<void> _updateLastLogin(String uid) async {
     try {
-      await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(uid)
-          .update({'lastLoginAt': DateTime.now().toIso8601String()});
+      await _firestore.collection(AppConstants.usersCollection).doc(uid).update(
+        {'lastLoginAt': DateTime.now().toIso8601String()},
+      );
     } catch (e) {
       // Non-critical error, don't throw
       debugPrint('Failed to update last login: $e');
@@ -107,25 +104,23 @@ class AuthRepository {
   Future<AppUser?> createUserAccount({
     required String email,
     required String password,
-    required String displayName,
+    required String name,
     required UserRole role,
   }) async {
     try {
-      final UserCredential result = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential result = await _firebaseAuth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       if (result.user != null) {
         // Update display name
-        await result.user!.updateDisplayName(displayName);
-        
+        await result.user!.updateDisplayName(name);
+
         // Create user profile
         final appUser = await _createUserProfile(result.user!, role);
-        
+
         // Sign out the newly created user (admin remains signed in)
         await _firebaseAuth.signOut();
-        
+
         return appUser;
       }
       return null;
@@ -137,10 +132,9 @@ class AuthRepository {
   // Update user role (Admin only)
   Future<void> updateUserRole(String uid, UserRole newRole) async {
     try {
-      await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(uid)
-          .update({'role': newRole.name});
+      await _firestore.collection(AppConstants.usersCollection).doc(uid).update(
+        {'role': newRole.name},
+      );
     } catch (e) {
       throw Exception('Failed to update user role: $e');
     }
@@ -149,10 +143,9 @@ class AuthRepository {
   // Toggle user active status (Admin only)
   Future<void> toggleUserStatus(String uid, bool isActive) async {
     try {
-      await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(uid)
-          .update({'isActive': isActive});
+      await _firestore.collection(AppConstants.usersCollection).doc(uid).update(
+        {'isActive': isActive},
+      );
     } catch (e) {
       throw Exception('Failed to update user status: $e');
     }
@@ -163,9 +156,10 @@ class AuthRepository {
     return _firestore
         .collection(AppConstants.usersCollection)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => AppUser.fromJson(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => AppUser.fromJson(doc.data())).toList(),
+        );
   }
 
   // Reset password

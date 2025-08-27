@@ -67,10 +67,13 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Header with Nightclub Styling
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -81,7 +84,10 @@ class OrderConfirmationSheet extends StatelessWidget {
                           height: 28,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                              colors: [
+                                AppTheme.primaryColor,
+                                AppTheme.primaryDark,
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(2),
                           ),
@@ -117,7 +123,7 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Modern Divider
               Container(
                 height: 1,
@@ -132,7 +138,7 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               // Order details
               Expanded(
                 child: SingleChildScrollView(
@@ -143,9 +149,9 @@ class OrderConfirmationSheet extends StatelessWidget {
                     children: [
                       // Table and customer info
                       _buildOrderInfo(),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Items list header
                       Row(
                         children: [
@@ -154,7 +160,10 @@ class OrderConfirmationSheet extends StatelessWidget {
                             height: 20,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                                colors: [
+                                  AppTheme.primaryColor,
+                                  AppTheme.primaryDark,
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(2),
                             ),
@@ -172,18 +181,25 @@ class OrderConfirmationSheet extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
-                      ...orderState.items.map((item) => _buildOrderItem(context, item)),
-                      
+
+                      ...orderState.items.map(
+                        (item) => _buildOrderItem(context, item),
+                      ),
+
                       const SizedBox(height: 24),
-                      
+
                       // Summary
                       _buildOrderSummary(context),
+
+                      const SizedBox(height: 24),
+
+                      // Confirmation Notice
+                      _buildConfirmationNotice(),
                     ],
                   ),
                 ),
               ),
-              
+
               // Confirm button with Neon Effect
               Container(
                 padding: const EdgeInsets.all(24),
@@ -214,14 +230,25 @@ class OrderConfirmationSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: Text(
-                      'SEND TO KITCHEN',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 1.5,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.restaurant_menu,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'CONFIRM & SEND ORDER',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -285,9 +312,9 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               if (orderState.tableNumber != null) ...[
                 Row(
                   children: [
@@ -309,15 +336,11 @@ class OrderConfirmationSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-              
+
               if (orderState.customerName != null) ...[
                 Row(
                   children: [
-                    Icon(
-                      Icons.person,
-                      size: 20,
-                      color: AppTheme.primaryColor,
-                    ),
+                    Icon(Icons.person, size: 20, color: AppTheme.primaryColor),
                     const SizedBox(width: 12),
                     Text(
                       'Customer: ${orderState.customerName}',
@@ -331,7 +354,7 @@ class OrderConfirmationSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-              
+
               Row(
                 children: [
                   Icon(
@@ -386,7 +409,10 @@ class OrderConfirmationSheet extends StatelessWidget {
             children: [
               // Modern Quantity badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppTheme.primaryColor, AppTheme.primaryDark],
@@ -410,9 +436,9 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(width: 16),
-              
+
               // Product info
               Expanded(
                 child: Column(
@@ -438,7 +464,10 @@ class OrderConfirmationSheet extends StatelessWidget {
                     if (item.product.isAlcoholic) ...[
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -465,7 +494,7 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Total price with modern styling
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -549,9 +578,9 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Subtotal
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -574,9 +603,9 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // VAT
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -599,9 +628,9 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Modern Divider
               Container(
                 height: 1,
@@ -615,9 +644,9 @@ class OrderConfirmationSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Total with Neon Effect
               Container(
                 padding: const EdgeInsets.all(16),
@@ -662,6 +691,71 @@ class OrderConfirmationSheet extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmationNotice() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.warningColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.warningColor.withValues(alpha: 0.1),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.warningColor.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppTheme.warningColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'FINAL CONFIRMATION',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.warningColor,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '• Double-check all items and quantities\n'
+                '• Verify table number and customer details\n'
+                '• Order will be sent to kitchen/bar for preparation\n'
+                '• Changes after submission require cashier approval',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  height: 1.4,
                 ),
               ),
             ],
