@@ -111,7 +111,7 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
                         ),
                       ),
                       child: Text(
-                        '${filteredCount}/${users.length} users',
+                        '${users.length}/20 users',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.primaryColor,
@@ -193,7 +193,7 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
                     onChanged: (value) {
                       // Cancel previous timer
                       _searchTimer?.cancel();
-                      
+
                       // Start new timer for debounced search
                       _searchTimer = Timer(Duration(milliseconds: 300), () {
                         if (mounted) {
@@ -289,10 +289,10 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
 
                     // Add User Button
                     ElevatedButton.icon(
-                      onPressed: userManagementState.isLoading 
-                          ? null 
+                      onPressed: userManagementState.isLoading
+                          ? null
                           : () => _showAddUserDialog(context),
-                      icon: userManagementState.isLoading 
+                      icon: userManagementState.isLoading
                           ? SizedBox(
                               width: 16,
                               height: 16,
@@ -302,9 +302,11 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
                               ),
                             )
                           : const Icon(Icons.person_add),
-                      label: Text(userManagementState.isLoading 
-                          ? 'Creating...' 
-                          : 'Add User'),
+                      label: Text(
+                        userManagementState.isLoading
+                            ? 'Creating...'
+                            : 'Add User',
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
@@ -424,7 +426,7 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
                   onRefresh: () async {
                     ref.refresh(allUsersProvider);
                   },
-                  child: filteredUsers.length > 20 
+                  child: filteredUsers.length > 20
                       ? ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: filteredUsers.length,
@@ -692,8 +694,8 @@ class _UserManagementTabState extends ConsumerState<UserManagementTab> {
       context: context,
       builder: (context) => UserDetailsDialog(user: user),
     );
-    
-    // If changes were made, refresh the user list  
+
+    // If changes were made, refresh the user list
     if (result == true) {
       ref.refresh(allUsersProvider);
     }

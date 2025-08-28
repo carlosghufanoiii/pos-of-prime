@@ -7,11 +7,21 @@ import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
 import '../models/order.dart';
 import '../models/app_user.dart';
+import '../utils/logger.dart';
+import 'google_drive_service.dart';
 
 class ExportService {
-  /// Export orders to CSV file
-  static Future<String> exportOrdersToCSV(List<Order> orders) async {
+  /// Export orders to CSV file with automatic Google Drive upload
+  static Future<String> exportOrdersToCSV(
+    List<Order> orders, {
+    bool autoUploadToDrive = true,
+  }) async {
     try {
+      Logger.info(
+        '📊 Exporting ${orders.length} orders to CSV',
+        tag: 'ExportService',
+      );
+
       final directory = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().toIso8601String().split('T')[0];
       final fileName = 'prime_pos_orders_$timestamp.csv';
@@ -45,7 +55,7 @@ class ExportService {
         final items = order.items
             .map(
               (item) =>
-                  '${item.quantity}x ${item.product.name} (₱${item.product.price})',
+                  '${item.quantity}x ${item.product.name} (₱${item.unitPrice})',
             )
             .join('; ');
 
@@ -74,8 +84,41 @@ class ExportService {
       final csvString = const ListToCsvConverter().convert(csvData);
       await file.writeAsString(csvString);
 
+      Logger.info('✅ CSV file created: $fileName', tag: 'ExportService');
+
+      // Auto-upload to Google Drive
+      if (autoUploadToDrive) {
+        try {
+          Logger.info('☁️ Uploading CSV to Google Drive', tag: 'ExportService');
+          final driveUrl = await GoogleDriveService.instance.uploadCSVFile(
+            filePath,
+            fileName,
+            description:
+                'Prime POS Orders Export - ${DateTime.now().toLocal()}',
+          );
+
+          if (driveUrl != null) {
+            Logger.info(
+              '✅ CSV uploaded to Google Drive successfully',
+              tag: 'ExportService',
+            );
+          }
+        } catch (e) {
+          Logger.warning(
+            '⚠️ Failed to upload CSV to Google Drive: $e',
+            tag: 'ExportService',
+          );
+          // Continue execution - local file is still available
+        }
+      }
+
       return filePath;
     } catch (e) {
+      Logger.error(
+        '❌ Failed to export orders to CSV',
+        error: e,
+        tag: 'ExportService',
+      );
       throw Exception('Failed to export orders to CSV: $e');
     }
   }
@@ -130,9 +173,17 @@ class ExportService {
     }
   }
 
-  /// Export orders to Excel file
-  static Future<String> exportOrdersToExcel(List<Order> orders) async {
+  /// Export orders to Excel file with automatic Google Drive upload
+  static Future<String> exportOrdersToExcel(
+    List<Order> orders, {
+    bool autoUploadToDrive = true,
+  }) async {
     try {
+      Logger.info(
+        '📊 Exporting ${orders.length} orders to Excel',
+        tag: 'ExportService',
+      );
+
       final directory = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().toIso8601String().split('T')[0];
       final fileName = 'prime_pos_orders_$timestamp.xlsx';
@@ -142,7 +193,7 @@ class ExportService {
       final excel = Excel.createExcel();
       final sheet = excel['Orders'];
 
-      // Header row
+      // Header row with styling
       final headers = [
         'Order Number',
         'Date',
@@ -163,11 +214,12 @@ class ExportService {
       ];
 
       for (int i = 0; i < headers.length; i++) {
-        sheet
-            .cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0))
-            .value = TextCellValue(
-          headers[i],
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
         );
+        cell.value = TextCellValue(headers[i]);
+        // Add header styling (basic bold formatting)
+        cell.cellStyle = CellStyle(bold: true);
       }
 
       // Data rows
@@ -178,7 +230,7 @@ class ExportService {
         final items = order.items
             .map(
               (item) =>
-                  '${item.quantity}x ${item.product.name} (₱${item.product.price})',
+                  '${item.quantity}x ${item.product.name} (₱${item.unitPrice})',
             )
             .join('; ');
 
@@ -212,12 +264,53 @@ class ExportService {
         }
       }
 
+      // Auto-fit columns
+      for (int i = 0; i < headers.length; i++) {
+        sheet.setColumnWidth(i, 15);
+      }
+
       // Save file
       final file = File(filePath);
       await file.writeAsBytes(excel.encode()!);
 
+      Logger.info('✅ Excel file created: $fileName', tag: 'ExportService');
+
+      // Auto-upload to Google Drive
+      if (autoUploadToDrive) {
+        try {
+          Logger.info(
+            '☁️ Uploading Excel to Google Drive',
+            tag: 'ExportService',
+          );
+          final driveUrl = await GoogleDriveService.instance.uploadExcelFile(
+            filePath,
+            fileName,
+            description:
+                'Prime POS Orders Excel Export - ${DateTime.now().toLocal()}',
+          );
+
+          if (driveUrl != null) {
+            Logger.info(
+              '✅ Excel uploaded to Google Drive successfully',
+              tag: 'ExportService',
+            );
+          }
+        } catch (e) {
+          Logger.warning(
+            '⚠️ Failed to upload Excel to Google Drive: $e',
+            tag: 'ExportService',
+          );
+          // Continue execution - local file is still available
+        }
+      }
+
       return filePath;
     } catch (e) {
+      Logger.error(
+        '❌ Failed to export orders to Excel',
+        error: e,
+        tag: 'ExportService',
+      );
       throw Exception('Failed to export orders to Excel: $e');
     }
   }
@@ -307,12 +400,18 @@ class ExportService {
     };
   }
 
-  /// Generate backup JSON file
+  /// Generate backup JSON file with automatic Google Drive upload
   static Future<String> generateBackupFile(
     List<Order> orders,
-    List<AppUser> users,
-  ) async {
+    List<AppUser> users, {
+    bool autoUploadToDrive = true,
+  }) async {
     try {
+      Logger.info(
+        '💾 Generating backup for ${orders.length} orders and ${users.length} users',
+        tag: 'ExportService',
+      );
+
       final directory = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now()
           .toIso8601String()
@@ -326,9 +425,13 @@ class ExportService {
           'exportDate': DateTime.now().toIso8601String(),
           'version': '1.0.0',
           'restaurant': 'Prime POS',
+          'totalOrders': orders.length,
+          'totalUsers': users.length,
+          'backupType': 'complete_system_backup',
         },
         'orders': orders.map((order) => order.toJson()).toList(),
         'users': users.map((user) => user.toJson()).toList(),
+        'statistics': generateSalesReport(orders),
       };
 
       final file = File(filePath);
@@ -336,9 +439,99 @@ class ExportService {
         const JsonEncoder.withIndent('  ').convert(backupData),
       );
 
+      Logger.info('✅ Backup file created: $fileName', tag: 'ExportService');
+
+      // Auto-upload to Google Drive
+      if (autoUploadToDrive) {
+        try {
+          Logger.info(
+            '☁️ Uploading backup to Google Drive',
+            tag: 'ExportService',
+          );
+          final driveUrl = await GoogleDriveService.instance.uploadBackupFile(
+            filePath,
+            fileName,
+            description:
+                'Prime POS Complete System Backup - ${DateTime.now().toLocal()}',
+          );
+
+          if (driveUrl != null) {
+            Logger.info(
+              '✅ Backup uploaded to Google Drive successfully',
+              tag: 'ExportService',
+            );
+
+            // Schedule cleanup of old backups
+            Future.microtask(
+              () => GoogleDriveService.instance.cleanupOldBackups(),
+            );
+          }
+        } catch (e) {
+          Logger.warning(
+            '⚠️ Failed to upload backup to Google Drive: $e',
+            tag: 'ExportService',
+          );
+          // Continue execution - local backup is still available
+        }
+      }
+
       return filePath;
     } catch (e) {
+      Logger.error(
+        '❌ Failed to generate backup file',
+        error: e,
+        tag: 'ExportService',
+      );
       throw Exception('Failed to generate backup file: $e');
+    }
+  }
+
+  /// Initialize automatic nightly backups to Google Drive
+  static Future<bool> initializeAutomaticBackups({
+    required Future<List<Order>> Function() getOrders,
+    required Future<List<AppUser>> Function() getUsers,
+  }) async {
+    try {
+      Logger.info(
+        '🌙 Initializing automatic nightly backups',
+        tag: 'ExportService',
+      );
+
+      // Schedule automatic backups
+      final success = await GoogleDriveService.instance.scheduleNightlyBackup(
+        backupGenerator: () async {
+          final orders = await getOrders();
+          final users = await getUsers();
+
+          // Generate backup file (without auto-upload since the service handles upload)
+          return await generateBackupFile(
+            orders,
+            users,
+            autoUploadToDrive: false,
+          );
+        },
+      );
+
+      if (success) {
+        Logger.info(
+          '✅ Automatic nightly backups initialized',
+          tag: 'ExportService',
+        );
+      } else {
+        Logger.warning(
+          '⚠️ Failed to initialize automatic backups',
+          tag: 'ExportService',
+        );
+      }
+
+      return success;
+    } catch (e) {
+      Logger.error(
+        '❌ Error initializing automatic backups',
+        error: e,
+        tag: 'ExportService',
+      );
+      return false;
     }
   }
 }

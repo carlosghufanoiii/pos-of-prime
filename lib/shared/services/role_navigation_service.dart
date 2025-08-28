@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_role.dart';
 import '../widgets/role_screen_wrapper.dart';
+import '../widgets/fallback_screen.dart';
 import '../../features/waiter/presentation/screens/waiter_order_screen.dart';
 import '../../features/cashier/presentation/screens/cashier_screen.dart';
 import '../../features/kitchen/presentation/screens/kitchen_screen.dart';
@@ -11,30 +12,47 @@ import '../../features/admin/presentation/screens/admin_screen.dart';
 class RoleNavigationService {
   /// Get the primary screen for a user role
   static Widget getPrimaryScreenForRole(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return const AdminScreen();
-      case UserRole.waiter:
-        return const RoleScreenWrapper(
-          title: 'Order System',
-          child: WaiterOrderScreen(),
-        );
-      case UserRole.cashier:
-        return const RoleScreenWrapper(
-          title: 'Cashier System',
-          child: CashierScreen(),
-        );
-      case UserRole.kitchen:
-        return const RoleScreenWrapper(
-          title: 'Kitchen Display',
-          child: KitchenScreen(),
-        );
-      case UserRole.bartender:
-        return const RoleScreenWrapper(
-          title: 'Bar Display',
-          child: BarScreen(),
-        );
+    try {
+      switch (role) {
+        case UserRole.admin:
+          return const AdminScreen();
+        case UserRole.waiter:
+          return const RoleScreenWrapper(
+            title: 'Order System',
+            child: WaiterOrderScreen(),
+          );
+        case UserRole.cashier:
+          return const RoleScreenWrapper(
+            title: 'Cashier System',
+            child: CashierScreen(),
+          );
+        case UserRole.kitchen:
+          return const RoleScreenWrapper(
+            title: 'Kitchen Display',
+            child: KitchenScreen(),
+          );
+        case UserRole.bartender:
+          return const RoleScreenWrapper(
+            title: 'Bar Display',
+            child: BarScreen(),
+          );
+      }
+    } catch (e) {
+      // Fallback screen if primary screen fails to load
+      return _buildFallbackScreen(role, e);
     }
+  }
+
+  /// Build fallback screen when primary screen fails
+  static Widget _buildFallbackScreen(UserRole role, dynamic error) {
+    return FallbackScreen(
+      title: '${role.displayName} - Loading Issue',
+      message: 'The ${role.displayName} service is starting up. This may take a moment...',
+      icon: Icons.hourglass_empty,
+      onRetry: () {
+        // Could trigger app restart or refresh in the future
+      },
+    );
   }
 
   /// Check if a user role can access a specific feature

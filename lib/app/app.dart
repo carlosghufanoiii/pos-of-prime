@@ -53,12 +53,21 @@ class _SecureAuthWrapperState extends ConsumerState<SecureAuthWrapper> {
         await dataService.initialize().timeout(
           const Duration(seconds: 3), // Reduced timeout
           onTimeout: () {
-            Logger.warning('⚡ Data service init timeout, continuing', tag: 'AuthWrapper');
+            Logger.warning(
+              '⚡ Data service init timeout, continuing',
+              tag: 'AuthWrapper',
+            );
           },
         );
-        Logger.info('⚡ Data services initialized in background', tag: 'AuthWrapper');
+        Logger.info(
+          '⚡ Data services initialized in background',
+          tag: 'AuthWrapper',
+        );
       } catch (e) {
-        Logger.warning('⚡ Background data service init failed: $e', tag: 'AuthWrapper');
+        Logger.warning(
+          '⚡ Background data service init failed: $e',
+          tag: 'AuthWrapper',
+        );
         // Continue - app works without these services
       }
     });
@@ -102,23 +111,22 @@ class _SecureAuthWrapperState extends ConsumerState<SecureAuthWrapper> {
     if (!mounted) return;
 
     // Handle successful authentication
-    if (previous?.authState != AuthRoleState.authenticated && 
+    if (previous?.authState != AuthRoleState.authenticated &&
         next.authState == AuthRoleState.authenticated &&
         next.user != null) {
-      
       final user = next.user!;
       Logger.info(
-        '✅ Authentication complete: ${user.email} (${user.role.displayName})', 
-        tag: 'AuthWrapper'
+        '✅ Authentication complete: ${user.email} (${user.role.displayName})',
+        tag: 'AuthWrapper',
       );
-      
+
       // No need to navigate manually - the build method will handle the UI update
     }
 
     // Handle authentication errors
     if (next.hasError && previous?.error != next.error) {
       Logger.error('Authentication error: ${next.error}', tag: 'AuthWrapper');
-      
+
       // Show error message if needed
       if (next.error != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -139,10 +147,10 @@ class _SecureAuthWrapperState extends ConsumerState<SecureAuthWrapper> {
   /// Build the appropriate screen for authenticated users
   Widget _buildAuthenticatedScreen(AuthRoleData authData) {
     final user = authData.user!;
-    
+
     Logger.info(
-      '🏠 Building home screen for ${user.role.displayName}', 
-      tag: 'AuthWrapper'
+      '🏠 Building home screen for ${user.role.displayName}',
+      tag: 'AuthWrapper',
     );
 
     // Route based on user role - single navigation, no race conditions

@@ -4,6 +4,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../../shared/constants/app_theme.dart';
 import '../../../../shared/providers/export_sync_provider.dart';
 import '../../../../shared/services/offline_sync_service.dart';
+import '../../../../shared/services/export_service.dart';
+import '../../../../shared/services/google_drive_service.dart';
 import '../../providers/admin_provider.dart';
 
 class ExportSyncTab extends ConsumerWidget {
@@ -54,7 +56,9 @@ class ExportSyncTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildConnectionStatus(AsyncValue<List<ConnectivityResult>> connectivityStatus) {
+  Widget _buildConnectionStatus(
+    AsyncValue<List<ConnectivityResult>> connectivityStatus,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -62,14 +66,16 @@ class ExportSyncTab extends ConsumerWidget {
           children: [
             Icon(
               connectivityStatus.when(
-                data: (connectivity) => connectivity.contains(ConnectivityResult.none)
+                data: (connectivity) =>
+                    connectivity.contains(ConnectivityResult.none)
                     ? Icons.wifi_off
                     : Icons.wifi,
                 loading: () => Icons.wifi_find,
                 error: (_, __) => Icons.error,
               ),
               color: connectivityStatus.when(
-                data: (connectivity) => connectivity.contains(ConnectivityResult.none)
+                data: (connectivity) =>
+                    connectivity.contains(ConnectivityResult.none)
                     ? Colors.red
                     : Colors.green,
                 loading: () => Colors.orange,
@@ -377,10 +383,10 @@ class ExportSyncTab extends ConsumerWidget {
                   enabled: !exportState.isExporting,
                 ),
                 _buildExportButton(
-                  'Export Orders (Excel)',
-                  Icons.table_chart,
+                  'Export to Drive (Excel)',
+                  Icons.cloud_upload,
                   Colors.green,
-                  () => _exportOrders(ref, 'excel'),
+                  () => _exportOrdersToGoogleDrive(ref, 'excel'),
                   enabled: !exportState.isExporting,
                 ),
                 _buildExportButton(
@@ -391,10 +397,17 @@ class ExportSyncTab extends ConsumerWidget {
                   enabled: !exportState.isExporting,
                 ),
                 _buildExportButton(
-                  'Create Backup',
-                  Icons.backup,
+                  'Backup to Drive',
+                  Icons.backup_outlined,
                   Colors.orange,
-                  () => _createBackup(ref),
+                  () => _createBackupToGoogleDrive(ref),
+                  enabled: !exportState.isExporting,
+                ),
+                _buildExportButton(
+                  'Setup Auto-Backup',
+                  Icons.schedule,
+                  Colors.purple,
+                  () => _setupAutomaticBackups(ref, context),
                   enabled: !exportState.isExporting,
                 ),
               ],
@@ -679,5 +692,252 @@ class ExportSyncTab extends ConsumerWidget {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} at ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  // Google Drive specific export methods
+  Future<void> _exportOrdersToGoogleDrive(WidgetRef ref, String format) async {
+    try {
+      final offlineOrders = await ref.read(offlineOrdersProvider.future);
+
+      // Show loading dialog
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Authenticating with Google Drive...'),
+              ],
+            ),
+          ),
+        );
+      }
+
+      // Authenticate with Google Drive first
+      final authenticated = await GoogleDriveService.instance.authenticate();
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+      }
+
+      if (!authenticated) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Google Drive authentication failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Export with auto-upload
+      if (format == 'excel') {
+        await ref
+            .read(exportProvider.notifier)
+            .exportOrdersToExcel(offlineOrders);
+      } else if (format == 'csv') {
+        await ref
+            .read(exportProvider.notifier)
+            .exportOrdersToCSV(offlineOrders);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Export uploaded to Google Drive successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _createBackupToGoogleDrive(WidgetRef ref) async {
+    try {
+      // Show loading dialog
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Creating backup and uploading to Google Drive...'),
+              ],
+            ),
+          ),
+        );
+      }
+
+      final orders = await ref.read(offlineOrdersProvider.future);
+      final users = await ref.read(allUsersProvider.future);
+
+      await ref.read(exportProvider.notifier).generateBackupFile(orders, users);
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Backup uploaded to Google Drive successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog if still open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _setupAutomaticBackups(
+    WidgetRef ref,
+    BuildContext context,
+  ) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Setup Automatic Backups'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will enable automatic nightly backups to Google Drive at 2:00 AM.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.schedule, color: Colors.blue, size: 16),
+                SizedBox(width: 8),
+                Text(
+                  'Daily at 2:00 AM',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.cloud_upload, color: Colors.green, size: 16),
+                SizedBox(width: 8),
+                Text(
+                  'Auto-upload to Google Drive',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.delete_sweep, color: Colors.orange, size: 16),
+                SizedBox(width: 8),
+                Text(
+                  'Keep last 30 days only',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Note: Google Drive authentication will be required.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _initializeAutomaticBackups(ref);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+            child: const Text('Enable Auto-Backup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _initializeAutomaticBackups(WidgetRef ref) async {
+    try {
+      // Show progress dialog
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Setting up automatic backups...'),
+              ],
+            ),
+          ),
+        );
+      }
+
+      // Initialize automatic backups
+      final success = await ExportService.initializeAutomaticBackups(
+        getOrders: () => ref.read(offlineOrdersProvider.future),
+        getUsers: () => ref.read(allUsersProvider.future),
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close progress dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Automatic backups enabled! Next backup at 2:00 AM.'
+                  : 'Failed to setup automatic backups. Please try again.',
+            ),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close progress dialog if still open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Setup failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
